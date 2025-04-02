@@ -1,0 +1,169 @@
+<?php
+include 'login_check.php'; // Ensure user is logged in
+include 'db_config.php';
+
+
+// Check if 'patient_id' is present in the URL
+if (!isset($_GET['patient_id']) || empty($_GET['patient_id'])) {
+    echo "Patient ID is missing.";
+    exit;
+}
+
+$patient_id = intval($_GET['patient_id']); // Sanitize the input
+
+// Fetch patient details from the 'patients' table in the database
+$stmt = $conn->prepare("SELECT * FROM patients WHERE Patient_ID = ?");
+$stmt->bind_param("i", $patient_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$patient = $result->fetch_assoc();
+$stmt->close();
+
+// If the patient doesn't exist, show an error message
+if (!$patient) {
+    echo "Patient not found.";
+    exit;
+}
+
+
+// Fetch medical history for the patient
+$medical_history_stmt = $conn->prepare("SELECT * FROM medical_history WHERE Patient_ID = ?");
+$medical_history_stmt->bind_param("i", $patient_id);
+$medical_history_stmt->execute();
+$medical_history_result = $medical_history_stmt->get_result();
+
+// Fetch dental history for the patient
+$dental_history_stmt = $conn->prepare("SELECT * FROM dental_history WHERE Patient_ID = ?");
+$dental_history_stmt->bind_param("i", $patient_id);
+$dental_history_stmt->execute();
+$dental_history_result = $dental_history_stmt->get_result();
+
+// Close the connection when done
+$conn->close();
+
+// Default values to avoid null issues
+$first_name = htmlspecialchars($patient['First_Name'] ?? '');
+$last_name = htmlspecialchars($patient['Last_Name'] ?? '');
+$date_of_birth = htmlspecialchars($patient['Date_of_Birth'] ?? 'N/A');
+$contact_information = htmlspecialchars($patient['Contact_Information'] ?? 'N/A');
+$email = htmlspecialchars($patient['Email'] ?? 'N/A');
+$gender = htmlspecialchars($patient['Gender'] ?? 'N/A');
+$date_of_last_visit = htmlspecialchars($patient['Date_of_Last_Visit'] ?? 'N/A');
+$emergency_contact_name = htmlspecialchars($patient['Emergency_Contact_Name'] ?? 'N/A');
+$relationship_to_patient = htmlspecialchars($patient['Relationship_to_Patient'] ?? 'N/A');
+$emergency_contact_phone = htmlspecialchars($patient['Emergency_Contact_Phone'] ?? 'N/A');
+$profile_image = htmlspecialchars($patient['Profile_Image'] ?? 'uploads/default.png'); // Use default image if profile image is missing
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Details - Dental Clinic Management System</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<style>
+    /* General Styles */
+    .main-content { flex: 1; padding: 20px; }
+    .main-content h1, .main-content h2 { color: #2c3e50; margin-bottom: 20px; }
+    .patient-info { background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 30px; }
+    .patient-info img { border-radius: 8px; margin-top: 10px; }
+    /* Add Appointment Button */
+    .main-content .btn { display: inline-block; padding: 10px 20px; background-color: #3498db; color: #fff; text-decoration: none; font-weight: bold; border-radius: 4px; transition: background-color 0.3s ease, transform 0.2s ease; }
+    .main-content .btn:hover { background-color: #2874a6; transform: scale(1.05); }
+    /* Table Styles */
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    table th, table td { padding: 10px 15px; border: 1px solid #ddd; text-align: center; }
+    table th { background-color: #3498db; color: #fff; }
+    table tr:nth-child(even) { background-color: #f9f9f9; }
+    table tr:hover { background-color: #f1f1f1; }
+    table td a { color: #3498db; text-decoration: none; font-weight: bold; }
+    table td a:hover { text-decoration: underline; }
+    /* Section Styling */
+    #patient-medical-history, #patient-dental-history { background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 30px; }
+    /* Responsive Design */
+    @media (max-width: 768px) { .container { flex-direction: column; } .sidebar { width: 100%; text-align: center; } .main-content { padding: 10px; } table th, table td { font-size: 14px; padding: 8px; } }
+</style>
+<body>
+<div class="container">
+    <!-- Sidebar Menu -->
+    <aside class="sidebar">
+        <h2 class="logo">
+            <img src="images/lads.png" alt="Dental Clinic Logo">
+            <h1>LAD DCAMS</h1>
+        </h2>
+        <ul>
+            <li><a href="admin_dashboard.php">Dashboard</a></li>
+            <li><a href="patients.php" class="active">Patients</a></li>
+            <li><a href="dentists.php">Dentists</a></li>
+            <li><a href="appointments.php">Appointments</a></li>
+            <li><a href="admin_add_services.php">Add Services</a></li>
+            <li><a href="reports.php">Reports</a></li>
+            <li><a href="admin_settings.php">Settings</a></li>
+            <li><a href="logout.php">Logout</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <section id="patient-detail">
+            <h1>Patient Details</h1>
+            <div class="patient-info">
+                <p><strong>First Name:</strong> <?php echo $first_name; ?></p>
+                <p><strong>Last Name:</strong> <?php echo $last_name; ?></p>
+                <p><strong>Date of Birth:</strong> <?php echo $date_of_birth; ?></p>
+                <p><strong>Contact Information:</strong> <?php echo $contact_information; ?></p>
+                <p><strong>Email:</strong> <?php echo $email; ?></p>
+                <p><strong>Gender:</strong> <?php echo $gender; ?></p>
+                <p><strong>Emergency Contact Name:</strong> <?php echo $emergency_contact_name; ?></p>
+                <p><strong>Relationship to Patient:</strong> <?php echo $relationship_to_patient; ?></p>
+                <p><strong>Emergency Contact Phone:</strong> <?php echo $emergency_contact_phone; ?></p>
+                <p><a href="admin_add_appointments.php?patient_id=<?php echo $patient_id; ?>" class="btn">Add Appointment</a></p>
+            </div>
+            
+
+
+            
+        </section>
+        <p><a href="patient_detail.php?patient_id=<?php echo $patient_id; ?>" class="btn">Medical History</a>
+        <a href="admin_dental_history.php?patient_id=<?php echo $patient_id; ?>" class="btn">View Dental History</a>
+        <a href="admin_payment_details.php?patient_id=<?php echo $patient_id; ?>" class="btn">View Payment Details</a></p>
+
+        <!-- Medical History Section -->
+        <section id="patient-medical-history">
+            <h2>Medical History</h2>
+            <?php if ($medical_history_result->num_rows > 0): ?>
+                <p><a href="admin_add_medical_history.php?patient_id=<?php echo $patient_id; ?>" class="btn">Add Medical History</a></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Record Created At</th>
+                            <th>Current Medical Conditions</th>
+                            <th>Allergies</th>
+                            <th>Medications</th>
+                            <th>Previous Surgeries</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($medical_history = $medical_history_result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo $medical_history['created_at'] ? date('F j, Y, g:i A', strtotime($medical_history['created_at'])) : 'N/A'; ?></td>
+                                <td><?php echo htmlspecialchars($medical_history['Current_Medical_Conditions'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($medical_history['Allergies'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($medical_history['Medications'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($medical_history['Previous_Surgeries'] ?? 'N/A'); ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p>No medical history found for this patient.</p>
+            <?php endif; ?>
+        </section>
+        
+      
+    </main>
+</div>
+</body>
+</html>
