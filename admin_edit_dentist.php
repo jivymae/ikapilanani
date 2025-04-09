@@ -177,6 +177,132 @@ $conn->close();
     <title>Edit Dentist - Dental Clinic Management System</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
+<style>
+
+/* Main Content Styles */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    background-color: white;
+}
+
+.main-content h1 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #1abc9c;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Form Styles */
+form {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus {
+    border-color: #1abc9c;
+    outline: none;
+}
+
+/* Checkbox Styles */
+#services-container,
+form > label[for="availability"] + label {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+form > label[for="specialization"] + label,
+#services-container label {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: normal;
+}
+
+form > label[for="specialization"] + label:hover,
+#services-container label:hover {
+    background-color: #e9ecef;
+}
+
+input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Button Styles */
+button[type="submit"] {
+    background-color: #1abc9c;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+    width: 100%;
+}
+
+button[type="submit"]:hover {
+    background-color: #16a085;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+    
+    form {
+        padding: 20px;
+    }
+}
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const specializationCheckboxes = document.querySelectorAll('.specialization-checkbox');

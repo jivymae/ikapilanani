@@ -54,7 +54,149 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Medical History - Dental Clinic Management System</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+<style>
+ /* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+
+
+
+
+/* Main Content Styles */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+}
+
+.main-content h1 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between icon and text */
+}
+
+.error {
+    color: #e74c3c;
+    background-color: #f8d7da;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+/* Form Styles */
+form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group textarea {
+    width: 480px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 30px;
+}
+
+.form-group textarea:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+/* Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #2874a6;
+}
+
+.btn i {
+    margin-right: 8px; /* Add spacing between icon and text (if any) */
+}
+
+/* Back Button Styles */
+.back-btn {
+    
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Space between icon and text */
+}
+
+.back-btn:hover {
+    background-color: blue;
+    color: black;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 10px;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    form {
+        padding: 15px;
+    }
+
+    .main-content h1 {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+    </style>
 <body>
 <div class="container">
     <!-- Sidebar Menu -->
@@ -77,13 +219,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <!-- Main Content -->
     <main class="main-content">
-      
-        <h1>Add Medical History for <?php echo htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']); ?></h1>
+        <!-- Back Button and Heading -->
+        <h1>
+            <a href="patient_detail.php?patient_id=<?php echo $patient_id; ?>" class="back-btn">
+                <i class="fas fa-arrow-left"></i> <!-- Back button icon -->
+            </a>
+            Add Medical History for <?php echo htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']); ?>
+        </h1>
         
         <?php if (!empty($error_message)): ?>
             <p class="error"><?php echo $error_message; ?></p>
         <?php endif; ?>
 
+        <!-- Form -->
         <form action="admin_add_medical_history.php?patient_id=<?php echo $patient_id; ?>" method="POST">
             <div class="form-group">
                 <label for="current_medical_conditions">Current Medical Conditions:</label>
@@ -105,8 +253,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <button type="submit" class="btn">Add Medical History</button>
             </div>
         </form>
-        <p><a href="patient_detail.php?patient_id=<?php echo $patient_id; ?>" class="btn">Back to Patient Details</a></p>
-
     </main>
 </div>
 </body>

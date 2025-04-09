@@ -386,7 +386,7 @@ a:active {
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Appointment ID</th>
+                           
                             <th>Time</th>
                             <th>Patient Name</th>
                             <th>Status</th>
@@ -395,34 +395,51 @@ a:active {
                     </thead>
                     <tbody>
                     <?php if ($result->num_rows > 0): ?>
-                        <?php while ($row = $result->fetch_assoc()): ?>
-                            <tr>
-                                <td>
-                                    <?php echo htmlspecialchars($row['appointment_date']); ?> 
-                                </td>
-                                <td>(ID: <?php echo htmlspecialchars($row['appointment_id']); ?>)</td>
-                                <td><?php echo htmlspecialchars($row['appointment_time']); ?></td>
-                                <td><?php echo htmlspecialchars($row['patient_first_name'] . ' ' . $row['patient_last_name']); ?></td>
-                                <td>
-    <?php 
-    // Check if the status is 'completed' and change it to 'done'
-    $status = $row['appointment_status'] == 'completed' ? 'done' : $row['appointment_status'];
-    echo htmlspecialchars($status); 
-    ?>
-</td>
-
-                                <td>
-                                    <a href="admin_view_appointment.php?id=<?php echo $row['appointment_id']; ?>">View</a> |
-                                    <a href="edit_appointment.php?id=<?php echo $row['appointment_id']; ?>">Edit</a> |
-                                    <a href="cancel_appointment.php?id=<?php echo $row['appointment_id']; ?>" onclick="return confirm('Are you sure you want to cancel this appointment?');">Cancel</a>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="6">No appointments found.</td>
-                        </tr>
-                    <?php endif; ?>
+    <?php while ($row = $result->fetch_assoc()): ?>
+        <tr>
+            <td>
+                <?php 
+                // Format the date as "Month Day, Year" (e.g., "October 15, 2023")
+                $formattedDate = date('F j, Y', strtotime($row['appointment_date']));
+                echo htmlspecialchars($formattedDate); 
+                ?>
+            </td>
+            <td>
+                <?php 
+                // Format the time in 12-hour format with AM/PM (e.g., "2:30 PM")
+                $formattedTime = date('g:i A', strtotime($row['appointment_time']));
+                echo htmlspecialchars($formattedTime); 
+                ?>
+            </td>
+            <td><?php echo htmlspecialchars($row['patient_first_name'] . ' ' . $row['patient_last_name']); ?></td>
+            <td>
+                <?php 
+                // Check the status and display accordingly
+                $status = $row['appointment_status'];
+                if ($status == 'completed') {
+                    $status = 'Done';
+                } elseif ($status == 'no_show') {
+                    $status = 'No Show';
+                } elseif ($status == 'cancelled') {
+                    $status = 'Cancelled';
+                } elseif ($status == 'pending') {
+                    $status = 'Pending';
+                }
+                echo htmlspecialchars($status); 
+                ?>
+            </td>
+            <td>
+                <a href="admin_view_appointment.php?id=<?php echo $row['appointment_id']; ?>">View</a> |
+                <a href="edit_appointment.php?id=<?php echo $row['appointment_id']; ?>">Edit</a> |
+                <a href="cancel_appointment.php?id=<?php echo $row['appointment_id']; ?>" onclick="return confirm('Are you sure you want to cancel this appointment?');">Cancel</a>
+            </td>
+        </tr>
+    <?php endwhile; ?>
+<?php else: ?>
+    <tr>
+        <td colspan="6">No appointments found.</td>
+    </tr>
+<?php endif; ?>
                     </tbody>
                 </table>
             </section>

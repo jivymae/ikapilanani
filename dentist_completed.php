@@ -332,7 +332,7 @@ input[type="checkbox"] {
     <table>
         <thead>
         <tr>
-            <th>Appointment ID</th>
+          
             <th>Patient Name</th>
             <th>Appointment Date</th>
             <th>Appointment Time</th>
@@ -344,7 +344,7 @@ input[type="checkbox"] {
         <?php if (!empty($appointments)): ?>
             <?php foreach ($appointments as $appointment): ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($appointment['id'] ?? ''); ?></td>
+                  
                     <td><?php echo htmlspecialchars($appointment['patient_name'] ?? ''); ?></td>
                     <td><?php echo htmlspecialchars($appointment['date'] ?? ''); ?></td>
                     <td><?php echo htmlspecialchars($appointment['time'] ?? ''); ?></td>

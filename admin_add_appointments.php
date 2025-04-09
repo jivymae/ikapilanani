@@ -16,13 +16,16 @@ $patient = [];
 $age = 0; // Initialize age variable
 
 if ($patient_id) {
-    // Fetch patient details including Date_Of_Birth
-    $stmt = $conn->prepare("SELECT Patient_ID, CONCAT(First_Name, ' ', Last_Name) AS patient_name, Date_Of_Birth FROM patients WHERE Patient_ID = ?");
+    // Fetch patient details including Date_Of_Birth and SCID
+    $stmt = $conn->prepare("SELECT Patient_ID, CONCAT(First_Name, ' ', Last_Name) AS patient_name, Date_Of_Birth, SCID FROM patients WHERE Patient_ID = ?");
     $stmt->bind_param('i', $patient_id);
     $stmt->execute();
-    $stmt->bind_result($id, $patient_name, $birth_date);
+    $stmt->bind_result($id, $patient_name, $birth_date, $scid);
     if ($stmt->fetch()) {
-        $patient = ['id' => $id, 'name' => $patient_name, 'birth_date' => $birth_date];
+        $patient = ['id' => $id, 'name' => $patient_name, 'birth_date' => $birth_date, 'scid' => $scid];
+
+        // Debugging: Print the SCID to confirm it's being fetched
+        echo "<script>console.log('SCID Fetched:', '" . $scid . "');</script>";
 
         // Calculate age
         if ($birth_date) {
@@ -33,7 +36,6 @@ if ($patient_id) {
     }
     $stmt->close();
 }
-
 // Fetch list of dentists with first and last names, and profile images
 $dentists = [];
 $stmt = $conn->prepare("SELECT u.user_id AS dentist_id, u.first_name, u.last_name, u.username, u.profile_image 
@@ -92,40 +94,17 @@ if ($patient_id) {
 }
 
 // Handle appointment creation
+// Handle appointment creation
+// Handle appointment creation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_appointment'])) {
     $patient_id = $_POST['patient_id'];
     $dentist_id = $_POST['dentist_id'];
     $appointment_date = $_POST['appointment_date'];
     $appointment_time = $_POST['appointment_time'];
     $selected_services = $_POST['services'] ?? [];
-    $payment_method_id = $_POST['payment_method']; // Payment Method ID
-    $reason = $_POST['reason']; // Get the reason for the visit
-    $is_emergency = $_POST['is_emergency']; // Get the emergency status (string '1' or '0')
-
-    // Calculate the patient's age
-    $today = new DateTime();
-$birthdate = new DateTime($patient['birth_date']);
-$age = $today->diff($birthdate)->y;
-
-
-
-
-    // Insert appointment into the database, including the is_emergency field
-    $stmt = $conn->prepare("INSERT INTO appointments (patient_id, dentist_id, appointment_date, appointment_time, reason, is_emergency) 
-    VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('iissss', $patient_id, $dentist_id, $appointment_date, $appointment_time, $reason, $is_emergency);
-    $stmt->execute();
-
-    $appointment_id = $stmt->insert_id; // Get the last inserted appointment ID
-    $stmt->close();
-
-    // Insert services into the `appointment_services` table
-    foreach ($selected_services as $service_id) {
-        $stmt = $conn->prepare("INSERT INTO appointment_services (appointment_id, service_id) VALUES (?, ?)");
-        $stmt->bind_param('ii', $appointment_id, $service_id);
-        $stmt->execute();
-    }
-    $stmt->close();
+    $payment_method_id = $_POST['payment_method'];
+    $reason = $_POST['reason'];
+    $is_emergency = $_POST['is_emergency'];
 
     // Calculate the total amount based on selected services
     $total_amount = array_reduce($selected_services, function($carry, $service_id) use ($conn) {
@@ -138,24 +117,49 @@ $age = $today->diff($birthdate)->y;
         return $carry + $price;
     }, 0);
 
+    // Calculate patient's age
+    $stmt = $conn->prepare("SELECT Date_Of_Birth FROM patients WHERE Patient_ID = ?");
+    $stmt->bind_param('i', $patient_id);
+    $stmt->execute();
+    $stmt->bind_result($birth_date);
+    $stmt->fetch();
+    $stmt->close();
 
-    
-    // Apply 20% discount if the patient is 60 or older
-    if ($age >= 60) {
-        $total_amount = $total_amount * 0.80;  // Apply 20% discount
+    if ($birth_date) {
+        $today = new DateTime();
+        $birthdate = new DateTime($birth_date);
+        $age = $today->diff($birthdate)->y;
+
+        // Apply 20% discount if patient is 60 or older
+        if ($age >= 60) {
+            $total_amount = $total_amount * 0.80;  // Apply 20% discount
+        }
     }
 
-    // Insert payment details into the payments table
-    $transaction_number = ''; // Unique Transaction ID
-    $payment_status = 'pending'; // Payment status set to 'pending'
+    // Insert appointment into the database
+    $stmt = $conn->prepare("INSERT INTO appointments (patient_id, dentist_id, appointment_date, appointment_time, reason, is_emergency) 
+                            VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('iissss', $patient_id, $dentist_id, $appointment_date, $appointment_time, $reason, $is_emergency);
+    $stmt->execute();
+    $appointment_id = $stmt->insert_id;
+    $stmt->close();
 
+    // Insert services into appointment_services
+    foreach ($selected_services as $service_id) {
+        $stmt = $conn->prepare("INSERT INTO appointment_services (appointment_id, service_id) VALUES (?, ?)");
+        $stmt->bind_param('ii', $appointment_id, $service_id);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Insert payment with the discounted total
+    $transaction_number = ''; // You can generate a unique transaction number here
     $stmt = $conn->prepare("INSERT INTO payments (appointment_id, patient_id, total_amount, transaction_number, method_id) 
                             VALUES (?, ?, ?, ?, ?)");
     $stmt->bind_param('iiisi', $appointment_id, $patient_id, $total_amount, $transaction_number, $payment_method_id);
     $stmt->execute();
     $stmt->close();
 
-    // Redirect to success page or display success message
     header('Location: appointments.php');
     exit();
 }
@@ -168,6 +172,9 @@ $stmt->bind_result($closure_date, $cause);
 while ($stmt->fetch()) {
     $closures[] = ['date' => $closure_date, 'cause' => $cause];
 }
+
+
+
 $stmt->close();
 ?>
 
@@ -248,82 +255,269 @@ function updateTimeSlots() {
             document.getElementById('dentist-id').value = dentistId;
         }
 
-        // Function to calculate the total amount based on selected services
         function calculateTotal() {
-        const checkboxes = document.querySelectorAll('input[name="services[]"]:checked');
-        let totalAmount = 0;
+    const checkboxes = document.querySelectorAll('input[name="services[]"]:checked');
+    let totalAmount = 0;
 
-        // Get the patient's age from the hidden input
-        const patientAge = parseInt(document.getElementById('patient-age').value);
-
-        // Calculate the total based on selected services
-        checkboxes.forEach(function(checkbox) {
-            const price = parseFloat(checkbox.getAttribute('data-price'));
-            if (!isNaN(price)) {
-                totalAmount += price;
-            }
-        });
-
-        // Apply 20% discount if patient is 60 or older
-        if (patientAge >= 60) {
-            totalAmount = totalAmount * 0.80;  // Apply a 20% discount
+    // Calculate the total based on selected services
+    checkboxes.forEach(checkbox => {
+        const price = parseFloat(checkbox.getAttribute('data-price'));
+        if (!isNaN(price)) {
+            totalAmount += price;
         }
+    });
 
-        // Update the display and hidden input with the total amount
-        document.getElementById('total-display').textContent = `Total Amount: PHP ${totalAmount.toFixed(2)}`;
+    // Get the patient's age from the hidden input
+    const patientAge = parseInt(document.getElementById('patient-age').value);
+
+    // For patients 60+ years old
+    if (patientAge >= 60) {
+        const discount = totalAmount * 0.20; // 20% discount
+        const discountedTotal = totalAmount - discount;
+
+        // Update the display to show breakdown
+        document.getElementById('total-display').textContent = `Original Amount: PHP ${totalAmount.toFixed(2)}`;
+        document.getElementById('discount-display').textContent = `Senior Discount (20%): PHP ${discount.toFixed(2)}`;
+        document.getElementById('discounted-total-display').textContent = `Final Amount: PHP ${discountedTotal.toFixed(2)}`;
+        
+        // Show all elements
+        document.getElementById('total-display').style.display = 'block';
+        document.getElementById('discount-display').style.display = 'block';
+        document.getElementById('discounted-total-display').style.display = 'block';
+
+        // Update the hidden input with the discounted total
+        document.getElementById('total-amount').value = discountedTotal.toFixed(2);
+    } 
+    // For patients under 60
+    else {
+        // Update the display to show simple total
+        document.getElementById('discounted-total-display').textContent = `Total Amount: PHP ${totalAmount.toFixed(2)}`;
+        
+        // Hide the breakdown elements
+        document.getElementById('total-display').style.display = 'none';
+        document.getElementById('discount-display').style.display = 'none';
+        
+        // Show only the final amount
+        document.getElementById('discounted-total-display').style.display = 'block';
+
+        // Update the hidden input with the total amount
         document.getElementById('total-amount').value = totalAmount.toFixed(2);
+    }
+}
 
-        // Optionally, display the discounted amount if applicable
-        if (patientAge >= 60) {
-            document.getElementById('discounted-display').style.display = 'block';
-            document.getElementById('discounted-amount').textContent = `Discounted Total: PHP ${totalAmount.toFixed(2)}`;
-        } else {
-            document.getElementById('discounted-display').style.display = 'none';
-        }
+function saveSCID() {
+    const scid = document.getElementById('scid').value;
+    const patientId = document.querySelector('input[name="patient_id"]').value;
+
+    if (!scid) {
+        alert('Please enter a valid SCID.');
+        return;
     }
 
+    // Save SCID to the database using AJAX
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'save_scid.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            alert('SCID saved successfully.');
+            calculateTotal(); // Recalculate total with discount
+        } else {
+            alert('Failed to save SCID.');
+        }
+    };
+    xhr.send(`patient_id=${patientId}&scid=${scid}`);
+}
     </script>
 </head>
 <style>
-    .dentists-list {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    gap: 20px;
-}
+/* General Styles */
 
-.dentist-card {
-    width: 150px;
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.3s;
-    padding: 10px;
-    border: 1px solid #ddd;
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+    max-width: 800px;
+    margin-left: 30%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
 }
 
+h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Form Styles */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="date"],
+select,
+textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+input[type="submit"] {
+    background-color: #1abc9c;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #16a085;
+}
+
+/* Dentist Cards */
+.dentists-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.dentist-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 150px;
+}
+
 .dentist-card:hover {
-    transform: scale(1.05);
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .dentist-card.selected {
-    border-color: #007bff;
-    background-color: #f0f8ff;
+    border-color: #1abc9c;
+    background-color: #e8f8f5;
 }
 
 .dentist-image {
     width: 100px;
     height: 100px;
+    border-radius: 50%;
     object-fit: cover;
-    border-radius: 8px;
+    margin-bottom: 10px;
 }
 
 .dentist-name {
-    margin-top: 10px;
-    font-size: 14px;
-    color: #333;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    margin: 0;
 }
 
+/* Dentist Profile Image */
+#dentist-profile {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#dentist-profile img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #1abc9c;
+}
+
+/* Service List */
+#service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#service-list label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: normal;
+    color: #555;
+}
+
+#service-list input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Total Amount Display */
+#total-display {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    font-weight: bold;
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* Emergency Select */
+#is_emergency {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Time Slots */
+#appointment_time {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Senior Citizen Notice */
+p[style*="color: green"] {
+    background-color: #e8f8f5;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Error Message */
+p[style*="color: red"] {
+    background-color: #f8d7da;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 20px;
+}
     </style>
 
 <body>
@@ -357,8 +551,7 @@ function updateTimeSlots() {
 <?php endif; ?>
 <?php if ($patient): ?>
     <p><strong>Patient:</strong> <?php echo htmlspecialchars($patient['name']); ?></p>
-    <p><strong>Age:</strong> <?php echo $age; ?></p>
-
+   
     <input type="hidden" name="patient_id" value="<?php echo $patient['id']; ?>">
 <?php else: ?>
     <p>No patient selected or patient not found.</p>
@@ -463,19 +656,46 @@ function updateTimeSlots() {
     }
 
     function calculateTotal() {
-        const checkboxes = document.querySelectorAll('input[name="services[]"]:checked');
-        let totalAmount = 0;
+    const checkboxes = document.querySelectorAll('input[name="services[]"]:checked');
+    let totalAmount = 0;
 
-        checkboxes.forEach(checkbox => {
-            const price = parseFloat(checkbox.getAttribute('data-price'));
-            if (!isNaN(price)) {
-                totalAmount += price;
-            }
-        });
+    // Calculate the total based on selected services
+    checkboxes.forEach(checkbox => {
+        const price = parseFloat(checkbox.getAttribute('data-price'));
+        if (!isNaN(price)) {
+            totalAmount += price;
+        }
+    });
 
+    // Get the patient's age from the hidden input
+    const patientAge = parseInt(document.getElementById('patient-age').value);
+
+    // Apply 20% discount if patient is 60 or older
+    if (patientAge >= 60) {
+        const discount = totalAmount * 0.20; // 20% discount
+        const discountedTotal = totalAmount - discount;
+
+        // Update the display
         document.getElementById('total-display').textContent = `Total Amount: PHP ${totalAmount.toFixed(2)}`;
+        document.getElementById('discount-display').textContent = `Discount: 20% (PHP ${discount.toFixed(2)})`;
+        document.getElementById('discounted-total-display').textContent = `Discounted Total: PHP ${discountedTotal.toFixed(2)}`;
+
+        // Show the discount and discounted total
+        document.getElementById('discount-display').style.display = 'block';
+        document.getElementById('discounted-total-display').style.display = 'block';
+
+        // Update the hidden input with the discounted total
+        document.getElementById('total-amount').value = discountedTotal.toFixed(2);
+    } else {
+        // No discount applied
+        document.getElementById('total-display').textContent = `Total Amount: PHP ${totalAmount.toFixed(2)}`;
+        document.getElementById('discount-display').style.display = 'none';
+        document.getElementById('discounted-total-display').style.display = 'none';
+
+        // Update the hidden input with the total amount
         document.getElementById('total-amount').value = totalAmount.toFixed(2);
     }
+}
 </script>
 
 <label for="is_emergency">Is this an emergency?</label>
@@ -505,12 +725,20 @@ function updateTimeSlots() {
         <label for="reason">Reason for Visit:</label>
 <textarea name="reason" id="reason" rows="4" required placeholder="Enter the reason for the visit"></textarea>
 
-      
+<?php if ($age >= 60): ?>
+    <div class="scid-section">
+        <label for="scid">Enter SCID (Senior Citizen ID):</label>
+        <input type="text" id="scid" name="scid" placeholder="Enter SCID" 
+               value="<?php echo isset($patient['scid']) ? htmlspecialchars($patient['scid']) : ''; ?>" 
+               onchange="calculateTotal()">
+        <button type="button" onclick="saveSCID()">Save SCID</button>
+    </div>
+<?php endif; ?>
 
-        <input type="hidden" name="total_amount" id="total-amount" value="0.00">
-        
-        <p id="total-display">Total Amount: PHP 0.00</p>
-
+<input type="hidden" name="total_amount" id="total-amount" value="0.00">
+<p id="total-display" style="display: ;"></p>  <!-- Only shows for seniors -->
+<p id="discount-display" style="display: none;"></p>  <!-- Only shows for seniors -->
+<p id="discounted-total-display">Total Amount: PHP 0.00</p>  <!-- Always shows -->
         <input type="submit" name="create_appointment" value="Create Appointment">
     </form>
 </div>

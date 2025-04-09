@@ -383,7 +383,7 @@ input[type="checkbox"] {
         <a href="dentist_profile.php">Profile</a>
         <a href="dentist_patient_appointments.php" class="active">Appointments</a>
         <a href="dentist_patient_records.php">Patient Records</a>
-        <a href="dentist_message.php">Messages</a>
+
         <a href="logout.php">Logout</a>
 
     </div>
@@ -412,7 +412,7 @@ input[type="checkbox"] {
         <table>
             <thead>
                 <tr>
-                    <th>Appointment ID</th>
+                    
                     <th>Patient Name</th>
                     <th>Patient Email</th>
                     <th>Appointment Date</th>
@@ -427,7 +427,7 @@ input[type="checkbox"] {
             <tbody>
                 <?php foreach ($appointments as $appointment): ?>
                     <tr>
-                        <td><?php echo htmlspecialchars($appointment['id'] ?? ''); ?></td>
+                       
                         <td><?php echo htmlspecialchars($appointment['first_name'] . ' ' . $appointment['last_name'] ?? ''); ?></td>
                         <td><?php echo htmlspecialchars($appointment['email'] ?? ''); ?></td>
                         <td><?php echo htmlspecialchars($appointment['date'] ?? ''); ?></td>

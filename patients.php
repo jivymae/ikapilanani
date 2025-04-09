@@ -347,7 +347,7 @@ table th, table td {
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
+                   
                     <th>Last Name</th>
                     <th>First Name</th>
                     <th>Date Added</th>
@@ -358,7 +358,7 @@ table th, table td {
                 <?php if ($result): ?>
                     <?php while ($row = $result->fetch_assoc()): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($row['Patient_ID']); ?></td>
+                           
                             <td><?php echo htmlspecialchars($row['Last_Name']); ?></td>
                             <td><?php echo htmlspecialchars($row['First_Name']); ?></td>
                             <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($row['Created_At']))); ?></td>

@@ -122,297 +122,483 @@ $stmt->close();
     <title>Appointment Details</title>
     <link rel="stylesheet" type="text/css" href="css/dentist.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
 </head>
 <style>
     /* General Styles */
 /* General Styles */
 
 
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
 .main-content {
-    width: 80%;
-    margin: 30px auto;
-    padding: 25px;
+    max-width: 750px;
+    height: 400px;
+    margin: 20px auto;
+    padding: 30px;
     background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ddd;
 }
 
-button.button {
-    background-color: #7a4fd1; /* Smooth Violet */
-    color: #fff;
-    padding: 12px 18px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 20px;
-    font-size: 16px;
-    transition: background-color 0.3s ease, transform 0.3s ease;
+h1, h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
 }
 
-button.button:hover {
-    background-color: #5c2f99; /* Darker Violet on hover */
-    transform: scale(1.05); /* Slight enlarge effect */
+h1 {
+    font-size: 2.5em;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
 }
 
-/* Styling for the "What Part of the Teeth" section */
-form label {
-    font-weight: 600;
-    color: #5c3c91;
-    font-size: 16px;
-}
-
-form .teeth-part-group {
-    display: flex;
-    gap: 20px; /* Space between radio buttons */
-    align-items: center; /* Vertically center the items */
-}
-
-form input[type="radio"] {
-    margin-right: 8px;
-    transform: scale(1.2); /* Increase size of radio buttons */
-}
-
-form label {
-    font-size: 16px;
-    color: #5c3c91; /* Color for the labels */
-    cursor: pointer;
-}
-
-/* When radio is selected */
-form input[type="radio"]:checked + label {
-    font-weight: bold;
-    color: #7a4fd1;
-}
-
-
-form {
+h2 {
+    font-size: 2em;
     margin-top: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    color: #3498db;
 }
 
-form label {
-    font-weight: 600;
-    color: #5c3c91; /* Slightly muted purple for labels */
-    font-size: 16px;
+/* Appointment Information Section */
+.appointment-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
-form input[type="text"],
-form input[type="date"],
-form textarea,
-form input[type="file"],
-form input[type="time"] {
-    padding: 10px;
-    border: 1px solid #e0c7f7; /* Light purple border */
+.appointment-info p {
+    margin: 0;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.appointment-info strong {
+    color: #2c3e50;
+    display: inline-block;
+    width: 150px; /* Fixed width for labels */
+}
+
+/* Button Styles */
+.button {
+    background-color: #3498db;
+    color: #fff;
+    padding: 12px 24px;
+    border: none;
     border-radius: 6px;
-    background-color: #f7f4ff;
-    font-size: 14px;
-    transition: border 0.3s ease;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    margin-bottom: 20px;
 }
 
-form input[type="text"]:focus,
-form input[type="date"]:focus,
-form textarea:focus,
-form input[type="file"]:focus,
-form input[type="time"]:focus {
-    border: 1px solid #7a4fd1; /* Violet border on focus */
-    outline: none;
+.button:hover {
+    background-color: #2980b9;
 }
 
-form textarea {
-    resize: vertical;
-    min-height: 120px;
+/* Modal Overlay */
+#dentalHistoryModalOverlay,
+#medicalHistoryModalOverlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    z-index: 1000; /* Ensure it's on top of other content */
+    justify-content: center;
+    align-items: center;
 }
 
-form input[type="radio"] {
-    margin-right: 8px;
+/* Modal Content */
+.modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 800px; /* Slightly wider for tables */
+    max-height: 90vh; /* Limit modal height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    position: relative;
 }
 
-form input[type="radio"]:checked + label {
-    font-weight: bold;
-    color: #7a4fd1;
+/* Close Button */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+    transition: color 0.3s ease;
 }
 
+.close-modal:hover {
+    color: #000;
+}
+
+/* Table Styling */
 table {
     width: 100%;
-    margin-top: 30px;
     border-collapse: collapse;
-    background-color: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    margin-bottom: 20px;
 }
 
 table th, table td {
     padding: 12px;
     text-align: left;
-    border: 1px solid #e0c7f7;
+    border-bottom: 1px solid #ddd;
 }
 
 table th {
-    background-color: #7a4fd1;
-    color: white;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-table td {
-    background-color: #f9f5ff;
-    color: #333;
-    font-size: 14px;
-}
-
-table tr:nth-child(even) {
-    background-color: #f2e9ff; /* Light lilac for even rows */
+    background-color: #3498db;
+    color: #fff;
 }
 
 table tr:hover {
-    background-color: #e0d2f5; /* Subtle hover effect */
+    background-color: #f1f1f1;
 }
 
-table td, table th {
-    border-radius: 6px;
-}
-
-/* Responsive Styles */
+/* Responsive Design */
 @media (max-width: 768px) {
-    .main-content {
-        width: 90%;
+    .modal-content {
+        padding: 20px;
     }
 
-    table, th, td {
-        font-size: 14px;
+    table, thead, tbody, th, td, tr {
+        display: block;
     }
 
-    button.button {
-        width: 100%;
-        padding: 12px 20px;
+    table th {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
     }
+
+    table tr {
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+
+    table td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+    }
+
+    table td:before {
+        position: absolute;
+        top: 12px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        content: attr(data-label);
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
 }
 
-/* Treatment Form Styling */
-#treatmentForm {
-    margin-top: 30px;
-    background-color: #f4f4f9;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-#showFormBtn {
-    background-color: #8e44ad;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
-}
-
-#showFormBtn:hover {
-    background-color: #6c2a8b;
-}
-
-h2 {
-    color: #7a4fd1; /* Soft violet */
-}
-
-input[type="radio"] {
-    margin-right: 5px;
-}
-
-form input[type="radio"] + label {
-    font-weight: normal;
-    margin-right: 20px;
-}
-
-form input[type="radio"]:checked + label {
-    color: #7a4fd1; /* Highlight checked radio buttons */
-}
-
-/* Form Section Styling */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-
-/* Buttons Styling */
-button.button {
-    background-color: #9b7fd3;
-    border-radius: 8px;
-    color: white;
-    padding: 12px 16px;
-    font-size: 16px;
-    border: none;
-    transition: all 0.3s ease;
-}
-
-button.button:hover {
-    background-color: #7a4fd1;
-    transform: scale(1.05);
-}
-
-form input[type="date"],
-form input[type="text"],
-form input[type="file"],
-form textarea {
-    padding: 12px;
-    background-color: #f8f6ff;
-    border-radius: 6px;
-    border: 1px solid #e0c7f7;
-    transition: border 0.3s ease;
-}
-
-form input[type="date"]:focus,
-form input[type="text"]:focus,
-form textarea:focus,
-form input[type="file"]:focus {
-    border: 1px solid #7a4fd1;
-}
-
-/* Customizing Back link */
+/* Link Styles */
 a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
     display: inline-block;
     margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #8e44ad;
-    color: white;
-    text-decoration: none;
-    border-radius: 6px;
-    font-size: 16px;
-    transition: all 0.3s ease;
 }
 
 a:hover {
-    background-color: #6c2a8b;
-    transform: scale(1.05);
+    text-decoration: underline;
 }
 
-/* Enhancing table responsiveness */
+/* Back Button Styles */
+.back-button {
+    display: inline-block;
+    margin-bottom: 20px; /* Space below the button */
+    font-size: 1.2em; /* Icon size */
+    color: #3498db; /* Icon color */
+    text-decoration: none; /* Remove underline */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.back-button:hover {
+    color: #2980b9; /* Darker color on hover */
+}
+
+/* Adjust the h1 heading to align with the back button */
+h1 {
+    display: inline-block;
+    margin-left: 10px; /* Space between the icon and the heading */
+    font-size: 2.5em;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+
+/* Modal Overlay */
+#modalOverlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    z-index: 1000; /* Ensure it's on top of other content */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 600px; /* Limit modal width */
+    position: relative;
+}
+
+/* Close Button */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+/* Modal Overlay */
+#modalOverlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    z-index: 1000; /* Ensure it's on top of other content */
+    justify-content: center;
+    align-items: center;
+    overflow: auto; /* Enable scrolling for the overlay if needed */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 600px; /* Limit modal width */
+    max-height: 90vh; /* Limit modal height to 90% of the viewport height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    position: relative;
+}
+
+/* Close Button */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+/* Modal Title */
+.modal-content h2 {
+    font-size: 2em;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+/* Form Styles */
+.modal-content form {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content label {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.modal-content textarea,
+.modal-content input[type="text"],
+.modal-content input[type="date"],
+.modal-content input[type="time"],
+.modal-content input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1em;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
+}
+
+.modal-content textarea {
+    resize: vertical;
+    height: 100px;
+}
+
+/* Teeth Part Group */
+.teeth-part-group {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.teeth-part-group label {
+    font-weight: normal;
+    color: #333;
+}
+
+/* Submit Button */
+.modal-content .button {
+    background-color: #3498db;
+    color: #fff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+    align-self: flex-start; /* Align button to the left */
+}
+
+.modal-content .button:hover {
+    background-color: #2980b9;
+}
+
+/* Icon Button Styles */
+.icon-button {
+    background-color: #3498db; /* Blue background */
+    color: #fff; /* White icon */
+    border: none;
+    border-radius: 50%; /* Circular button */
+    width: 36px; /* Fixed width */
+    height: 36px; /* Fixed height */
+    font-size: 18px; /* Icon size */
+    cursor: pointer;
+    margin-left: 10px; /* Space between heading and button */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.icon-button:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+}
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 20px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.5em;
+    }
+
+    .teeth-part-group {
+        flex-direction: column; /* Stack radio buttons vertically on smaller screens */
+    }
+}
+/* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
-        width: 95%;
+        padding: 20px;
     }
 
-    table, th, td {
-        font-size: 14px;
+    h1 {
+        font-size: 2em;
     }
 
-    .main-content h1 {
-        font-size: 24px;
+    h2 {
+        font-size: 1.5em;
     }
 
-    button.button {
+    .appointment-info {
+        grid-template-columns: 1fr; /* Stack on smaller screens */
+    }
+
+    .button {
         width: 100%;
+        padding: 15px;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    table th {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    table tr {
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+
+    table td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+    }
+
+    table td:before {
+        position: absolute;
+        top: 12px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        content: attr(data-label);
+        font-weight: bold;
+        color: #2c3e50;
     }
 }
-
     </style>
 <body>
     <div class="main-content">
+    <a href="dentist_patient_appointments.php" class="back-button">
+        <i class="fas fa-arrow-left"></i> <!-- Font Awesome back arrow icon -->
+    </a>
         <h1>Appointment Details</h1>
-        <h2>Appointment Information</h2>
+        <h2>Appointment Information
+    <button id="showFormBtn" class="icon-button">
+        <i class="fas fa-plus"></i> <!-- Font Awesome plus icon -->
+    </button>
+</h2>
         <p><strong>Appointment ID:</strong> <?php echo htmlspecialchars($appointment_id); ?></p>
         <p><strong>Patient Name:</strong> <?php echo htmlspecialchars($first_name . ' ' . $last_name); ?></p>
         <p><strong>Date:</strong> <?php echo htmlspecialchars($appointment_date); ?></p>
@@ -422,55 +608,72 @@ a:hover {
         <p><strong>Reason:</strong> <?php echo htmlspecialchars($reason); ?></p>
 
         <!-- Button to show treatment documentation form -->
-        <button id="showFormBtn" class="button">Add Treatment Documentation</button>
-
+       
         <!-- Treatment Documentation Form (Initially Hidden) -->
-        <div id="treatmentForm" style="display:none;">
-            <h2>Treatment Documentation</h2>
-            <form action="" method="POST" enctype="multipart/form-data">
-                <label for="diagnosis">Diagnosis:</label>
-                <textarea id="diagnosis" name="diagnosis" required></textarea><br><br>
+       <!-- Button to show treatment documentation modal -->
 
-                <label for="treatment_performed">Treatment Performed:</label>
-                <textarea id="treatment_performed" name="treatment_performed" required></textarea><br><br>
+<!-- Modal Overlay -->
+<div id="modalOverlay" style="display: none;">
+    <!-- Modal Content -->
+    <div id="treatmentModal" class="modal-content">
+        <!-- Close Button -->
+        <span id="closeModalBtn" class="close-modal">&times;</span>
 
-                <label for="medication_prescribed">Medication Prescribed:</label>
-                <textarea id="medication_prescribed" name="medication_prescribed" required></textarea><br><br>
+        <!-- Modal Title -->
+        <h2>Treatment Documentation</h2>
 
-                <label for="image">Images/X-rays:</label>
-                <input type="file" id="image" name="image"><br><br>
+        <!-- Treatment Documentation Form -->
+        <form action="" method="POST" enctype="multipart/form-data">
+            <label for="diagnosis">Diagnosis:</label>
+            <textarea id="diagnosis" name="diagnosis" required></textarea><br><br>
 
-                <label for="upper_teeth_left">Upper Teeth Left:</label>
-                <input type="text" id="upper_teeth_left" name="upper_teeth_left"><br><br>
+            <label for="treatment_performed">Treatment Performed:</label>
+            <textarea id="treatment_performed" name="treatment_performed" required></textarea><br><br>
 
-                <label for="lower_teeth_left">Lower Teeth Left:</label>
-                <input type="text" id="lower_teeth_left" name="lower_teeth_left"><br><br>
+            <label for="medication_prescribed">Medication Prescribed:</label>
+            <textarea id="medication_prescribed" name="medication_prescribed" required></textarea><br><br>
 
-                <label for="teeth_part">What Part of the Teeth:</label><br>
-<div class="teeth-part-group">
-    <input type="radio" id="upper" name="teeth_part" value="upper">
-    <label for="upper">Upper</label>
+            <label for="image">Images/X-rays:</label>
+            <input type="file" id="image" name="image"><br><br>
 
-    <input type="radio" id="lower" name="teeth_part" value="lower">
-    <label for="lower">Lower</label>
+            <label for="upper_teeth_left">Upper Teeth Left:</label>
+            <input type="text" id="upper_teeth_left" name="upper_teeth_left"><br><br>
 
-    <input type="radio" id="both" name="teeth_part" value="both">
-    <label for="both">Upper and Lower</label>
+            <label for="lower_teeth_left">Lower Teeth Left:</label>
+            <input type="text" id="lower_teeth_left" name="lower_teeth_left"><br><br>
+
+            <label for="teeth_part">What Part of the Teeth:</label><br>
+            <div class="teeth-part-group">
+                <input type="radio" id="upper" name="teeth_part" value="upper">
+                <label for="upper">Upper</label>
+
+                <input type="radio" id="lower" name="teeth_part" value="lower">
+                <label for="lower">Lower</label>
+
+                <input type="radio" id="both" name="teeth_part" value="both">
+                <label for="both">Upper and Lower</label>
+            </div>
+            <br><br>
+
+            <label for="follow_up_date">Follow-up Treatment:</label>
+            <input type="date" id="follow_up_date" name="follow_up_date" value="N/A"><br><br>
+
+            <label for="appointment_time">Appointment Time:</label>
+            <input type="time" id="appointment_time" name="appointment_time" required><br><br>
+
+            <button type="submit" class="button">Save Treatment Record</button>
+        </form>
+    </div>
 </div>
-<br><br>
-
-                <label for="follow_up_date">Follow-up Treatment:</label>
-                <input type="date" id="follow_up_date" name="follow_up_date" value="N/A"><br><br>
-
-                <label for="appointment_time">Appointment Time:</label>
-<input type="time" id="appointment_time" name="appointment_time" required><br><br>
-
-                <button type="submit" class="button">Save Treatment Record</button>
-
-            </form>
-            
-        </div>
         
+      <!-- Buttons to trigger modals -->
+<button id="showDentalHistoryBtn" class="button">View Dental History</button>
+<button id="showMedicalHistoryBtn" class="button">View Medical History</button>
+
+<!-- Dental History Modal -->
+<div id="dentalHistoryModalOverlay" style="display: none;">
+    <div class="modal-content">
+        <span id="closeDentalHistoryModalBtn" class="close-modal">&times;</span>
         <h2>Dental History</h2>
         <?php if (!empty($dental_history)): ?>
             <table>
@@ -500,7 +703,13 @@ a:hover {
         <?php else: ?>
             <p>No dental history found for this patient.</p>
         <?php endif; ?>
+    </div>
+</div>
 
+<!-- Medical History Modal -->
+<div id="medicalHistoryModalOverlay" style="display: none;">
+    <div class="modal-content">
+        <span id="closeMedicalHistoryModalBtn" class="close-modal">&times;</span>
         <h2>Medical History</h2>
         <?php if (!empty($medical_history)): ?>
             <table>
@@ -530,27 +739,77 @@ a:hover {
         <?php else: ?>
             <p>No medical history found for this patient.</p>
         <?php endif; ?>
+    </div>
+</div>
 
         <!-- Back button -->
-        <a href="dentist_patient_appointments.php">Back to Appointments</a>
-    </div>
-
+       
     <!-- JavaScript to toggle the form visibility -->
     <script>
-        // Toggle the treatment form visibility
-        var showFormBtn = document.getElementById("showFormBtn");
-        var treatmentForm = document.getElementById("treatmentForm");
+        // JavaScript to handle modal functionality
+        document.addEventListener('DOMContentLoaded', function () {
+    var showFormBtn = document.getElementById('showFormBtn');
+    var modalOverlay = document.getElementById('modalOverlay');
+    var closeModalBtn = document.getElementById('closeModalBtn');
 
-        showFormBtn.onclick = function() {
-            // Toggle form visibility
-            if (treatmentForm.style.display === "none") {
-                treatmentForm.style.display = "block";
-                showFormBtn.textContent = "Hide Treatment Documentation Form";
-            } else {
-                treatmentForm.style.display = "none";
-                showFormBtn.textContent = "Add Treatment Documentation";
-            }
+    // Show modal when "Add Treatment Documentation" button is clicked
+    showFormBtn.onclick = function () {
+        modalOverlay.style.display = 'flex'; // Show the modal overlay
+    };
+
+    // Hide modal when close button is clicked
+    closeModalBtn.onclick = function () {
+        modalOverlay.style.display = 'none'; // Hide the modal overlay
+    };
+
+    // Hide modal when clicking outside the modal content
+    modalOverlay.onclick = function (event) {
+        if (event.target === modalOverlay) {
+            modalOverlay.style.display = 'none'; // Hide the modal overlay
         }
+    };
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Dental History Modal
+    var showDentalHistoryBtn = document.getElementById('showDentalHistoryBtn');
+    var dentalHistoryModalOverlay = document.getElementById('dentalHistoryModalOverlay');
+    var closeDentalHistoryModalBtn = document.getElementById('closeDentalHistoryModalBtn');
+
+    showDentalHistoryBtn.onclick = function () {
+        dentalHistoryModalOverlay.style.display = 'flex';
+    };
+
+    closeDentalHistoryModalBtn.onclick = function () {
+        dentalHistoryModalOverlay.style.display = 'none';
+    };
+
+    dentalHistoryModalOverlay.onclick = function (event) {
+        if (event.target === dentalHistoryModalOverlay) {
+            dentalHistoryModalOverlay.style.display = 'none';
+        }
+    };
+
+    // Medical History Modal
+    var showMedicalHistoryBtn = document.getElementById('showMedicalHistoryBtn');
+    var medicalHistoryModalOverlay = document.getElementById('medicalHistoryModalOverlay');
+    var closeMedicalHistoryModalBtn = document.getElementById('closeMedicalHistoryModalBtn');
+
+    showMedicalHistoryBtn.onclick = function () {
+        medicalHistoryModalOverlay.style.display = 'flex';
+    };
+
+    closeMedicalHistoryModalBtn.onclick = function () {
+        medicalHistoryModalOverlay.style.display = 'none';
+    };
+
+    medicalHistoryModalOverlay.onclick = function (event) {
+        if (event.target === medicalHistoryModalOverlay) {
+            medicalHistoryModalOverlay.style.display = 'none';
+        }
+    };
+});
     </script>
 </body>
 </html>

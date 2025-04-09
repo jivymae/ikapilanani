@@ -44,6 +44,9 @@ $payments_stmt = $conn->prepare($payments_query);
 $payments_stmt->bind_param("i", $patient_id);
 $payments_stmt->execute();
 $payments_result = $payments_stmt->get_result();
+
+
+
 ?>
 
 <!DOCTYPE html>
@@ -53,82 +56,233 @@ $payments_result = $payments_stmt->get_result();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pending Payments - Dental Clinic Management System</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
-</head>
-<style>
-    /* Modal Styles */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    background-color: rgba(0, 0, 0, 0.4); /* Black background with opacity */
-}
+    <!-- Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
 
-/* Modal Content */
-.modal-content {
-    background-color: #fff;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 600px; /* Max width for the modal */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
 
-/* Close button (X) */
-.close-btn {
-    color: #aaa;
-    font-size: 28px;
-    font-weight: bold;
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    cursor: pointer;
-}
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #fff;
+        }
 
-.close-btn:hover,
-.close-btn:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
+        .main-content h1 {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
 
-/* Style the modal content */
-#transactionModal h2 {
-    font-size: 24px;
-    margin-bottom: 15px;
-}
+        .main-content h2 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between icon and text */
+        }
 
-#transactionModal p {
-    font-size: 16px;
-    line-height: 1.5;
-}
+        .back-btn {
+            cursor: pointer;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
 
-#transactionModal span {
-    font-weight: bold;
-    color: #333;
-}
+        .back-btn:hover {
+            color: #1abc9c;
+        }
 
-/* Button styling */
-.view-transaction-btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-}
+        /* Patient Details Section */
+        #patient-detail {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
 
-.view-transaction-btn:hover {
-    background-color: #45a049;
-}
+        #patient-detail .patient-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
 
+        #patient-detail .patient-info p {
+            margin: 0;
+            font-size: 1rem;
+            color: #555;
+        }
+
+        #patient-detail .patient-info strong {
+            color: #2c3e50;
+        }
+
+        /* Pending Payments Table */
+        #payment-details {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #payment-details table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        #payment-details table th,
+        #payment-details table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #payment-details table th {
+            background-color: #2c3e50;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #payment-details table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        #payment-details table td {
+            color: #555;
+        }
+
+        /* Button Styles */
+        .view-transaction-btn {
+            background-color: #1abc9c;
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-transaction-btn:hover {
+            background-color: #16a085;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px; /* Max width for the modal */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #aaa;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        #transactionModal h2 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        #transactionModal p {
+            font-size: 1rem;
+            color: #555;
+            margin: 10px 0;
+        }
+
+        #transactionModal span {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .receipts-link {
+            color: #1abc9c;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .receipts-link:hover {
+            color: #16a085;
+        }
+
+        /* Date Search Styles */
+        .date-search {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-search label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .date-search input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .date-search button {
+            background-color: #1abc9c;
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .date-search button:hover {
+            background-color: #16a085;
+        }
     </style>
+</head>
 <body>
 <div class="container">
     <!-- Sidebar Menu -->
@@ -151,42 +305,54 @@ $payments_result = $payments_stmt->get_result();
 
     <!-- Main Content -->
     <main class="main-content">
-        <section id="patient-info">
-            <h1>Patient: <?php echo htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']); ?></h1>
-            <p><strong>Patient ID:</strong> <?php echo htmlspecialchars($patient['Patient_ID']); ?></p>
-        </section>
-
         <section id="payment-details">
-            <h2>Pending Payments</h2>
-            <?php if ($payments_result->num_rows > 0): ?>
-                <table>
-                <thead>
-    <tr>
-        <th>Payment ID</th>
-        <th>Patient Name</th>
-        <th>Amount</th>
-        <th>Transaction Amount</th>
-        <th>Remaining Balance</th> <!-- Added Remaining Balance column -->
-        <th>Status</th>
-        <th>Created At</th>
-    </tr>
-</thead>
-<tbody>
-    <?php while ($payment = $payments_result->fetch_assoc()): ?>
-        <tr>
-            <td><?php echo htmlspecialchars($payment['payment_id'] ?? 'N/A'); ?></td>
-            <td><?php echo htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']); ?></td>
-            <td><?php echo htmlspecialchars($payment['total_amount'] ?? 'N/A'); ?></td>
-            <td><?php echo htmlspecialchars($payment['transaction_amount'] ?? 'N/A'); ?></td>
-            <td><?php echo htmlspecialchars($payment['remaining_balance'] ?? 'N/A'); ?></td>
-            <td><?php echo htmlspecialchars($payment['payment_status'] ?? 'N/A'); ?></td>
-            <td><?php echo date('Y-m-d', strtotime($payment['created_at']) ?: 'N/A'); ?></td>
-            <td><button class="view-transaction-btn" data-payment-id="<?php echo htmlspecialchars($payment['payment_id']); ?>">View Transaction</button></td> <!-- View Transaction Button -->
-        </tr>
-    <?php endwhile; ?>
-</tbody>
+            <!-- Back Button Icon -->
+            <h2>
+                <i class="fas fa-arrow-left back-btn" onclick="history.back()"></i>
+                Pending Payments
+            </h2>
 
-<!-- Modal for displaying transaction details -->
+            <!-- Date Search Input -->
+            <div class="date-search">
+                <label for="dateFilter">Filter by Date:</label>
+                <input type="date" id="dateFilter" onchange="filterTableByDate()">
+                <button onclick="clearDateFilter()">Clear Filter</button>
+            </div>
+
+            <?php if ($payments_result->num_rows > 0): ?>
+                <table id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Amount</th>
+                            <th>Transaction Amount</th>
+                            <th>Remaining Balance</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($payment = $payments_result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']); ?></td>
+                                <td><?php echo htmlspecialchars($payment['total_amount'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($payment['transaction_amount'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($payment['remaining_balance'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($payment['payment_status'] ?? 'N/A'); ?></td>
+                                <td class="created-at"><?php echo date('Y-m-d', strtotime($payment['created_at']) ?: 'N/A'); ?></td>
+                                <td><button class="view-transaction-btn" data-payment-id="<?php echo htmlspecialchars($payment['payment_id']); ?>">View Transaction</button></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p>No pending payments found for this patient.</p>
+            <?php endif; ?>
+        </section>
+    </main>
+</div>
+
 <!-- Modal for displaying transaction details -->
 <div id="transactionModal" class="modal">
     <div class="modal-content">
@@ -198,7 +364,6 @@ $payments_result = $payments_stmt->get_result();
         <p><strong>Created At:</strong> <span id="modal-created-at"></span></p>
     </div>
 </div>
-
 <script>
 // Modal functionality
 var modal = document.getElementById('transactionModal');
@@ -256,23 +421,30 @@ function fetchTransactionDetails(paymentId) {
     };
     xhr.send();
 }
+
+// Function to filter the table by date
+function filterTableByDate() {
+    var dateFilter = document.getElementById('dateFilter').value; // Get the selected date
+    var table = document.getElementById('paymentsTable');
+    var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var dateCell = row.getElementsByClassName('created-at')[0].textContent; // Get the date from the "Created At" column
+
+        if (dateFilter === '' || dateCell === dateFilter) {
+            row.style.display = ''; // Show the row if the date matches or no filter is applied
+        } else {
+            row.style.display = 'none'; // Hide the row if the date does not match
+        }
+    }
+}
+
+// Function to clear the date filter
+function clearDateFilter() {
+    document.getElementById('dateFilter').value = ''; // Clear the date input
+    filterTableByDate(); // Reset the table to show all rows
+}
 </script>
-
-
-
-                </table>
-            <?php else: ?>
-                <p>No pending payments found for this patient.</p>
-            <?php endif; ?>
-        </section>
-    </main>
-</div>
 </body>
 </html>
-
-<?php
-// Close the database connections
-$patient_stmt->close();
-$payments_stmt->close();
-$conn->close();
-?>

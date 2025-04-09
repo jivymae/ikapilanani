@@ -15,12 +15,13 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 
     // Query to get the appointment details, including payment info and other related data
     $sql = "
-       SELECT appointments.appointment_id, appointments.appointment_date, appointments.appointment_time, appointments.appointment_status,
-       patients.Patient_ID AS patient_id, patients.First_Name AS patient_first_name, patients.Last_Name AS patient_last_name,
-       GROUP_CONCAT(s.service_name) AS services,
-       p.total_amount AS payment_amount, tr.diagnosis, tr.medication_prescribed, 
-       tr.upper_teeth_left, tr.lower_teeth_left, tr.teeth_part, tr.follow_up_date, pr.pres_file,
-       p.payment_id  -- Fetch the payment_id from the payments table
+    SELECT appointments.appointment_id, appointments.appointment_date, appointments.appointment_time, appointments.appointment_status,
+           appointments.appointment_created_at, -- Add this line
+           patients.Patient_ID AS patient_id, patients.First_Name AS patient_first_name, patients.Last_Name AS patient_last_name,
+           GROUP_CONCAT(s.service_name) AS services,
+           p.total_amount AS payment_amount, tr.diagnosis, tr.medication_prescribed, 
+           tr.upper_teeth_left, tr.lower_teeth_left, tr.teeth_part, tr.follow_up_date, pr.pres_file,
+           p.payment_id  -- Fetch the payment_id from the payments table
     FROM appointments
     JOIN patients ON appointments.patient_id = patients.Patient_ID
     LEFT JOIN appointment_services aps ON appointments.appointment_id = aps.appointment_id
@@ -30,7 +31,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     LEFT JOIN payments p ON appointments.appointment_id = p.appointment_id
     WHERE appointments.appointment_id = ?
     GROUP BY appointments.appointment_id
-    ";
+ ";
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $appointment_id); // Bind the appointment_id to the query
@@ -90,11 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $payment_id = $appointment['payment_id']; // Use the payment_id from the appointment details
 
     // Validate and sanitize inputs
-    if (empty($transaction_amount) || empty($pstat_id)) {
-        $messages[] = "Transaction amount and payment status are required.";
+    if (empty($transaction_amount)) {
+        $messages[] = "Transaction amount is required.";
+    } elseif ($pstat_id == 1 && empty($due_date)) {
+        $messages[] = "Due date is required for downpayment.";
     } else {
-        // Set due_date to NULL if not provided
-        if (empty($due_date)) {
+        // Set due_date to NULL if not provided and not required
+        if ($pstat_id != 1) {
             $due_date = null;
         }
 
@@ -152,193 +155,182 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Appointment - Dental Clinic Management System</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <style>
-    /* Global Styles */
-
-
-
-
-/* Main Content Area */
-.main-content {
-    flex-grow: 1;
-    padding: 20px;
-    background-color: #f9f9f9;
-}
-
-/* Appointment Header */
-.main-content h1 {
-    font-size: 28px;
-    color: #4c2882;
-    margin-bottom: 20px;
-}
-
-/* Notifications */
-.notification {
-    background-color: #eaf4e5;
-    border-left: 5px solid #4CAF50;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-.notification p {
-    font-size: 16px;
+    /* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
     color: #333;
 }
 
-.notification p strong {
-    color: #4CAF50;
+h1, h2, h3 {
+    color: #2c3e50;
 }
 
-/* Appointment Details */
-.appointment-details {
+.main-content {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Notification Styles */
+.notification {
+    padding: 10px;
     margin-bottom: 20px;
-    font-size: 18px;
+    border-radius: 5px;
+    background-color: #e9f5ff;
+    border: 1px solid #b6d8ff;
+    color: #2c3e50;
+}
+
+.notification p {
+    margin: 0;
+}
+
+/* Appointment Details Styles */
+.appointment-details {
+    margin-bottom: 30px;
 }
 
 .appointment-details p {
     margin: 10px 0;
+    font-size: 16px;
 }
 
 .appointment-details strong {
-    font-weight: bold;
+    color: #2c3e50;
 }
 
-/* Payment Form */
-h3 {
-    font-size: 24px;
-    color: #4c2882;
-    margin-top: 40px;
-}
-
-form {
-    background-color: white;
+/* Payment Form Styles */
+/* Payment Form Styles */
+.payment-form {
+    background-color: #f9f9f9;
     padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: 20px;
 }
 
-form label {
+.payment-form h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.payment-form label {
     display: block;
     margin-bottom: 8px;
-    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
 }
 
-form input, form select {
+.payment-form input[type="number"],
+.payment-form input[type="date"],
+.payment-form select {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    background-color: #f9f9f9;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box; /* Ensure padding and border are included in the width */
 }
 
-form input[type="number"], form select {
-    width: 50%;
-    display: inline-block;
+.payment-form input[type="number"]:focus,
+.payment-form input[type="date"]:focus,
+.payment-form select:focus {
+    border-color: #3498db;
+    outline: none;
 }
 
-form input[type="date"] {
-    width: auto;
+.payment-form select {
+    appearance: none; /* Remove default arrow */
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%232c3e50" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
 }
 
-form button {
-    background-color: #4c2882;
-    color: white;
-    padding: 15px 30px;
-    font-size: 18px;
+.payment-form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #3498db;
+    color: #fff;
     border: none;
     border-radius: 5px;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s ease;
 }
 
-form button:hover {
-    background-color: #3a1f6b;
+.payment-form button:hover {
+    background-color: #2980b9;
 }
 
-/* Receipt PDF Details */
-.receipt-container {
-    margin-top: 40px;
-}
-
-.receipt-container h2 {
-    font-size: 24px;
-    color: #4c2882;
-    text-align: center;
-}
-
-.receipt-container .receipt-details {
-    margin-top: 20px;
-    font-size: 18px;
-}
-
-.receipt-container .receipt-details p {
-    margin: 5px 0;
-}
-
-/* Footer */
-footer {
-    text-align: center;
-    font-size: 14px;
-    color: #aaa;
-    padding: 10px;
-    margin-top: 40px;
-    border-top: 1px solid #ccc;
-}
-
-footer a {
+/* Back Button Styles */
+.back-button {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #3498db;
+    color: #fff;
     text-decoration: none;
-    color: #4c2882;
-    font-weight: bold;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
 }
 
-footer a:hover {
-    text-decoration: underline;
+.back-button:hover {
+    background-color: #2980b9;
 }
 
+.back-button i {
+    margin-right: 5px;
+}
 /* Responsive Design */
 @media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        width: 100%;
-        padding: 10px;
-    }
-
     .main-content {
-        padding: 10px;
+        padding: 15px;
     }
 
-    .appointment-details {
-        font-size: 16px;
-    }
-
-    form input, form select, form button {
+    .appointment-details p {
         font-size: 14px;
     }
-}
 
+    .payment-form {
+        padding: 15px;
+    }
+
+    .payment-form input[type="number"],
+    .payment-form input[type="date"],
+    .payment-form select {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    .payment-form button {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
     </style>
 <body>
-    <div class="container">
-        <aside class="sidebar">
-            <h2 class="logo">
-                <img src="images/lads.png" alt="Dental Clinic Logo">
-                <h1>LAD DCAMS</h1>
-            </h2>
-            <ul>
-                <li><a href="admin_dashboard.php">Dashboard</a></li>
-                <li><a href="appointments.php">Appointments</a></li>
-                <li><a href="patients.php">Patients</a></li>
-                <li><a href="transactions.php">Transactions</a></li>
-            </ul>
-        </aside>
+    
 
         <main class="main-content">
+        <a href="javascript:history.back()" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
             <h1>Appointment Details</h1>
 
             <?php if (!empty($messages)): ?>
@@ -353,10 +345,13 @@ footer a:hover {
                 <p><strong>Patient Name:</strong> <?php echo $appointment['patient_first_name'] . ' ' . $appointment['patient_last_name']; ?></p>
                 <p><strong>Appointment Date:</strong> <?php echo $appointment['appointment_date']; ?></p>
                 <p><strong>Appointment Status:</strong> <?php echo $appointment['appointment_status']; ?></p>
+                <p><strong>Appointment Created At:</strong> <?php echo date('F d, Y H:i:s', strtotime($appointment['appointment_created_at'])); ?></p> 
                 <p><strong>Services:</strong> <?php echo $appointment['services']; ?></p>
                 <p><strong>Total Amount:</strong> PHP <?php echo number_format($appointment['payment_amount'], 2); ?></p>
                 <p><strong>Remaining Balance:</strong> PHP <?php echo number_format($remaining_balance, 2); ?></p>
+                    </div>
 
+                    <div class="payment-form">
                 <h3>Make a Payment</h3>
                 <form method="POST" action="">
                     <label for="transaction_amount">Transaction Amount:</label>

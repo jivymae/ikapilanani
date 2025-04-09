@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $appointment_time = $_POST['appointment_time'];
     $appointment_status = $_POST['appointment_status'];
     $selected_services = isset($_POST['services']) ? $_POST['services'] : [];
+    $payment_method = $_POST['payment_method']; // Get the selected payment method
 
     // Update the appointment
     $update_sql = "UPDATE appointments SET appointment_date = ?, appointment_time = ?, appointment_status = ? WHERE appointment_id = ?";
@@ -50,16 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $update_stmt->execute();
     $update_stmt->close();
 
-    // If the status is 'paid', update the payment_status in the payments table
+    // If the status is 'paid', update the payment_status and payment method in the payments table
     if ($appointment_status === 'paid') {
         $patient_id = $appointment['patient_id'];
         
-        $payment_update_sql = "UPDATE payments SET payment_status = 'paid' WHERE patient_id = ? AND appointment_id = ?";
+        $payment_update_sql = "UPDATE payments SET payment_status = 'paid', method_id = ? WHERE patient_id = ? AND appointment_id = ?";
         $payment_update_stmt = $conn->prepare($payment_update_sql);
-        $payment_update_stmt->bind_param("ii", $patient_id, $appointment_id);
+        $payment_update_stmt->bind_param("iii", $payment_method, $patient_id, $appointment_id);
         $payment_update_stmt->execute();
         $payment_update_stmt->close();
     }
+
+    
 
     // Remove unselected services
     foreach ($assigned_services as $service_id) {
@@ -126,6 +129,17 @@ while ($row = $services_result->fetch_assoc()) {
 }
 $services_stmt->close();
 
+
+// Fetch available payment methods
+$payment_methods_sql = "SELECT method_id, method_name FROM payment_methods";
+$payment_methods_stmt = $conn->prepare($payment_methods_sql);
+$payment_methods_stmt->execute();
+$payment_methods_result = $payment_methods_stmt->get_result();
+$payment_methods = [];
+while ($row = $payment_methods_result->fetch_assoc()) {
+    $payment_methods[] = $row;
+}
+$payment_methods_stmt->close();
 $conn->close();
 ?>
 
@@ -242,6 +256,26 @@ form button:hover {
 .main-content a:hover {
     background-color: #555;
 }
+/* Back Button Styles */
+.back-button {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #3498db;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #2980b9;
+}
+
+.back-button i {
+    margin-right: 5px;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -288,7 +322,10 @@ form button:hover {
             </ul>
         </aside>
 
-<div class="main-content">
+        <div class="main-content">
+        <a href="appointments.php" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
     <h1>Edit Appointment</h1>
     <form action="edit_appointment.php?id=<?php echo $appointment_id; ?>" method="post">
         <label for="appointment_date">Date:</label>
@@ -298,12 +335,20 @@ form button:hover {
         <input type="time" name="appointment_time" id="appointment_time" value="<?php echo htmlspecialchars($appointment['appointment_time']); ?>" required>
 
         <label for="appointment_status">Status:</label>
-<select name="appointment_status" id="appointment_status" required>
-    <option value="pending" <?php echo $appointment['appointment_status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-    <option value="cancelled" <?php echo $appointment['appointment_status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-    <option value="no_show" <?php echo $appointment['appointment_status'] === 'no_show' ? 'selected' : ''; ?>>No Show</option> <!-- Added "No Show" option -->
-</select>
+        <select name="appointment_status" id="appointment_status" required>
+            <option value="pending" <?php echo $appointment['appointment_status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
+            <option value="cancelled" <?php echo $appointment['appointment_status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+            <option value="no_show" <?php echo $appointment['appointment_status'] === 'no_show' ? 'selected' : ''; ?>>No Show</option>
+        </select>
 
+        <label for="payment_method">Payment Method:</label>
+<select name="payment_method" id="payment_method" required>
+    <?php foreach ($payment_methods as $method): ?>
+        <option value="<?php echo $method['method_id']; ?>">
+            <?php echo htmlspecialchars($method['method_name']); ?>
+        </option>
+    <?php endforeach; ?>
+</select>
 
         <label for="services">Add Services:</label>
         <div id="services">
@@ -320,6 +365,5 @@ form button:hover {
     </form>
     <a href="appointments.php">Back to Appointments</a>
 </div>
-
 </body>
 </html>

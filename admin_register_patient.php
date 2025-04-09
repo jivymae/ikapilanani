@@ -12,7 +12,11 @@ $successMessage = "";
 $errorMessage = "";   
 $email = ""; // Initialize $email 
 $gender = "";  // Initialize gender variable
-$seniorCitizenID = ""; // Initialize Senior Citizen ID
+
+
+// Initialize variables
+$SCID = ""; // Add this line
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Sanitize form inputs
@@ -21,10 +25,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $dob = $conn->real_escape_string(trim($_POST['dob']));
     $contactInfo = $conn->real_escape_string(trim($_POST['contact_info']));
     $email = isset($_POST['email']) ? $conn->real_escape_string(trim($_POST['email'])) : '';
-    $seniorCitizenID = isset($_POST['senior_citizen_id']) ? $conn->real_escape_string(trim($_POST['senior_citizen_id'])) : ''; // Add Senior Citizen ID
     $emergencyContactName = $conn->real_escape_string(trim($_POST['emergency_contact_name']));
     $relationship = $conn->real_escape_string(trim($_POST['relationship']));
     $emergencyContactPhone = $conn->real_escape_string(trim($_POST['emergency_contact_phone']));
+    $SCID = $conn->real_escape_string(trim($_POST['scid'])); // Add this line
 
     // Get gender value
     $gender = isset($_POST['gender']) ? $conn->real_escape_string(trim($_POST['gender'])) : '';
@@ -49,9 +53,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Attempt to insert into database
     $conn->begin_transaction(); // Start transaction
     try {
-        $sql = "INSERT INTO Patients (Last_Name, First_Name, Date_of_Birth, Contact_Information, Emergency_Contact_Name, Relationship_to_Patient, Emergency_Contact_Phone, Email, Gender, Senior_Citizen_ID)
-                VALUES ('$lastName', '$firstName', '$dob', '$contactInfo', '$emergencyContactName', '$relationship', '$emergencyContactPhone', '$email', '$gender', '$seniorCitizenID')";
-        $conn->query($sql);
+        $sql = "INSERT INTO Patients (Last_Name, First_Name, Date_of_Birth, Contact_Information, Emergency_Contact_Name, Relationship_to_Patient, Emergency_Contact_Phone, Email, Gender, SCID)
+        VALUES ('$lastName', '$firstName', '$dob', '$contactInfo', '$emergencyContactName', '$relationship', '$emergencyContactPhone', '$email', '$gender', '$SCID')";
+    
+$conn->query($sql);
 
         $patientID = $conn->insert_id;
 
@@ -72,6 +77,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errorMessage = "Error: " . $e->getMessage();
     }
 }
+
+
 
 
 // Handle dental history insertion
@@ -119,7 +126,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_dental_history']
 
     <style>
 /* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
 
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    background-color: #fff;
+}
 
 .left-column, .right-column {
     background-color: #fff;
@@ -307,19 +332,20 @@ button[type="submit"]:hover {
                 <input type="text" name="contact_info" required value="<?php echo htmlspecialchars($contactInfo); ?>">
 
                 <label for="email">Email Address</label>
-<input type="email" name="email" value="<?php echo htmlspecialchars($email ?? ''); ?>">
+                <input type="email" name="email" value="<?php echo htmlspecialchars($email ?? ''); ?>">
 
-<label for="senior_citizen_id">Senior Citizen ID</label>
-<input type="text" name="senior_citizen_id" value="<?php echo htmlspecialchars($seniorCitizenID ?? ''); ?>">
-
-<label for="emergency_contact_name">Emergency Contact Name</label>
-<input type="text" name="emergency_contact_name" required value="<?php echo htmlspecialchars($emergencyContactName); ?>">
+                <label for="emergency_contact_name">Emergency Contact Name</label>
+                <input type="text" name="emergency_contact_name" required value="<?php echo htmlspecialchars($emergencyContactName); ?>">
 
                 <label for="relationship">Relationship to Patient</label>
                 <input type="text" name="relationship" required value="<?php echo htmlspecialchars($relationship); ?>">
 
                 <label for="emergency_contact_phone">Emergency Contact Phone</label>
                 <input type="text" name="emergency_contact_phone" required value="<?php echo htmlspecialchars($emergencyContactPhone); ?>">
+
+                <!-- Inside the form, after the email field -->
+<label for="scid">Senior Citizen ID</label>
+<input type="text" name="scid" value="<?php echo htmlspecialchars($SCID ?? ''); ?>">
 
                 <h3>Medical History</h3>
                 <label for="medical_conditions">Current Medical Conditions</label>
