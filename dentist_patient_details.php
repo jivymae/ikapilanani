@@ -136,319 +136,466 @@ $conn->close();
     <meta charset="UTF-8">
     <title>Patient Details - Dental Clinic Management System</title>
     <link rel="stylesheet" type="text/css" href="css/dentist.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-      /* Basic reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    display: flex;
-    height: 100vh;
-}
-
-/* Sidebar styling */
-.sidebar {
-    width: 250px; /* Sidebar width */
-    background-color: #b19cd9;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 20px;
-    position: fixed; /* Fix sidebar to the left */
-    height: 100%; /* Make sidebar full height */
-}
-
-/* Sidebar logo styling */
-.sidebar .logo {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.sidebar .logo img {
-    width: 80px;
-    height: auto;
-}
-
-.sidebar .logo h1 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
-/* Navbar links in the sidebar */
-.navbar {
-    width: 100%;
-    text-align: center;
-    margin-top: 20px;
-}
-
-.navbar h2 {
-    font-size: 18px;
-    margin-bottom: 20px;
-}
-
-.navbar a {
-    display: block;
-    color: white;
-    text-decoration: none;
-    padding: 12px;
-    margin: 5px 0;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-}
-
-.navbar a:hover,
-.navbar a.active {
-    background-color: #4c2882;
-}
-
-.navbar a.active {
-    font-weight: bold;
-}
-
-        .container {
-            background-color: #fff;
+      /* Main Content Styles - Scrollable Area */
+      .main-content {
+          
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            margin: auto;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            overflow-y: auto;
         }
 
-        .container h1 {
-            margin-bottom: 20px;
-            font-size: 28px;
-            color: #4c2882;
+        /* Patient Card Styles */
+        .patient-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
         }
 
-        p {
-            font-size: 16px;
-            margin: 8px 0;
-        }
-
-        strong {
-            color: #555;
-        }
-
-        a {
-            text-decoration: none;
-            color: #4c2882;
-            font-size: 16px;
-            margin-top: 20px;
-            display: inline-block;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed;
-            z-index: 1; /* Sit on top */
-            left: 0;
+        .patient-card::before {
+            content: '';
+            position: absolute;
             top: 0;
-            width: 100%;
+            left: 0;
+            width: 8px;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding-top: 60px;
+            background: linear-gradient(to bottom, #8a63d2, #4c2882);
         }
 
-        .modal-content {
-            background-color: #fff;
-            margin: 5% auto;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 800px;
+        .patient-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
         }
 
-        .close {
-            color: #aaa;
-            float: right;
+        .patient-header h1 {
+            color: #4c2882;
             font-size: 28px;
-            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
         }
 
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
+        .patient-header h1 i {
+            margin-right: 15px;
+            color: #8a63d2;
+        }
+
+        .back-btn {
+            background-color: #4c2882;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .back-btn:hover {
+            background-color: #3a1d66;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-btn i {
+            margin-right: 8px;
+        }
+
+        /* Patient Info Grid */
+        .patient-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            background: #f9f5ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #8a63d2;
+            transition: transform 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .info-item strong {
+            color: #4c2882;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .info-item p {
+            color: #555;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #8a63d2, #4c2882);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, #7a53c2, #3a1d66);
+        }
+
+        .action-btn i {
+            margin-right: 10px;
+        }
+
+        /* Section Headers */
+        .section-header {
+            color: #4c2882;
+            font-size: 22px;
+            margin: 30px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-header i {
+            margin-right: 15px;
         }
 
         /* Table Styles */
-        .medical-history table, .dental-history table, .appointments table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 30px;
         }
 
-        th, td {
-            padding: 12px;
-            text-align: left;
-            font-size: 14px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
         }
 
         th {
             background-color: #4c2882;
             color: white;
-            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
         }
 
         td {
-            border: 1px solid #ddd;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            color: #555;
         }
 
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #fafafa;
         }
 
         tr:hover {
-            background-color: #f1f1f1;
+            background-color: #f5f0ff;
         }
 
         .no-record {
-            font-size: 18px;
-            font-weight: bold;
+            text-align: center;
+            padding: 30px;
             color: #e74c3c;
+            font-size: 16px;
+            background: #fff5f5;
+            border-radius: 8px;
+            margin: 20px 0;
         }
-        /* Treatment Records Table Styles */
-.treatment-records table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
 
-.treatment-records th, .treatment-records td {
-    padding: 12px;
-    text-align: left;
-    font-size: 14px;
-    border: 1px solid #ddd;
-}
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s;
+            overflow-y: auto;
+        }
 
-.treatment-records th {
-    background-color: #4c2882;
-    color: white;
-}
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-.treatment-records td {
-    background-color: #f9f9f9;
-}
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 1000px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            animation: slideDown 0.4s;
+        }
 
-.treatment-records tr:nth-child(even) td {
-    background-color: #f1f1f1;
-}
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
 
-.treatment-records tr:hover {
-    background-color: #e8e8e8;
-}
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
 
-/* Optional: Make the table more responsive */
-@media (max-width: 768px) {
-    .treatment-records table, .treatment-records th, .treatment-records td {
-        display: block;
-        width: 100%;
-    }
-    
-    .treatment-records th {
-        background-color: #4c2882;
-    }
+        .close:hover {
+            color: #4c2882;
+        }
 
-    .treatment-records td {
-        text-align: right;
-        padding-left: 50%;
-        position: relative;
-    }
+        .modal-header {
+            color: #4c2882;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
 
-    .treatment-records td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 10px;
-        font-weight: bold;
-        color: #4c2882;
-    }
-}
+        .modal-header i {
+            margin-right: 15px;
+        }
 
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .patient-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .patient-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
     </style>
 </head>
 <body>
-<div class="sidebar">
+    <div class="sidebar">
+        <!-- Your existing sidebar content -->
         <nav class="navbar">
-        <div class="logo">
-            <img src="images/lads.png" alt="Dental Clinic Logo">
-            <h1>LAD DCAMS</h1>
+            <div class="logo">
+                <img src="images/lads.png" alt="Dental Clinic Logo">
+                <h1>LAD DCAMS</h1>
+            </div>
+            <nav>
+                <a href="dentist_dashboard.php">Dashboard</a>
+                <a href="dentist_profile.php">Profile</a>
+                <a href="dentist_patient_appointments.php">Appointments</a>
+                <a href="dentist_patient_records.php">Patient Records</a>
+                <a href="dentist_message.php">Messages</a>
+                <a href="logout.php">Logout</a>
+            </nav>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="patient-card">
+            <div class="patient-header">
+                <h1><i class="fas fa-user-injured"></i> Patient Details</h1>
+                <button class="back-btn" onclick="window.location.href='dentist_patient_records.php'">
+                    <i class="fas fa-arrow-left"></i> Back to Records
+                </button>
+            </div>
+
+            <div class="patient-info">
+                <div class="info-item">
+                    <strong>First Name</strong>
+                    <p><?php echo htmlspecialchars($First_Name ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Last Name</strong>
+                    <p><?php echo htmlspecialchars($Last_Name ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Date of Birth</strong>
+                    <p><?php echo htmlspecialchars($Date_of_Birth ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Gender</strong>
+                    <p><?php echo htmlspecialchars($Gender ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Contact Information</strong>
+                    <p><?php echo htmlspecialchars($Contact_Information ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Email</strong>
+                    <p><?php echo htmlspecialchars($Email ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Emergency Contact</strong>
+                    <p><?php echo htmlspecialchars($Emergency_Contact_Name ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Relationship</strong>
+                    <p><?php echo htmlspecialchars($Relationship_to_Patient ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Emergency Phone</strong>
+                    <p><?php echo htmlspecialchars($Emergency_Contact_Phone ?: 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Member Since</strong>
+                    <p><?php echo htmlspecialchars($Created_At ?: 'N/A'); ?></p>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="viewMedicalHistoryBtn" class="action-btn">
+                    <i class="fas fa-heartbeat"></i> Medical History
+                </button>
+                <button id="viewDentalHistoryBtn" class="action-btn">
+                    <i class="fas fa-tooth"></i> Dental History
+                </button>
+                <button id="viewCompletedAppointmentsBtn" class="action-btn">
+                    <i class="fas fa-calendar-check"></i> Completed Appointments
+                </button>
+            </div>
         </div>
-        
-        <nav>
-        
-        <a href="dentist_dashboard.php">Dashboard</a>
-        <a href="dentist_profile.php">Profile</a>
-        <a href="dentist_patient_appointments.php" >Appointments</a>
-        <a href="dentist_patient_records.php">Patient Records</a>
-        <a href="dentist_message.php">Messages</a>
-        <a href="logout.php">Logout</a>
 
-    </div>
-    <div class="container">
-        <h1>Patient Details</h1>
-        <p><strong>First Name:</strong> <?php echo htmlspecialchars($First_Name ?: 'N/A'); ?></p>
-        <p><strong>Last Name:</strong> <?php echo htmlspecialchars($Last_Name ?: 'N/A'); ?></p>
-        <p><strong>Date of Birth:</strong> <?php echo htmlspecialchars($Date_of_Birth ?: 'N/A'); ?></p>
-        <p><strong>Contact Information:</strong> <?php echo htmlspecialchars($Contact_Information ?: 'N/A'); ?></p>
-        <p><strong>Email:</strong> <?php echo htmlspecialchars($Email ?: 'N/A'); ?></p>
-        <p><strong>Emergency Contact Name:</strong> <?php echo htmlspecialchars($Emergency_Contact_Name ?: 'N/A'); ?></p>
-        <p><strong>Relationship to Patient:</strong> <?php echo htmlspecialchars($Relationship_to_Patient ?: 'N/A'); ?></p>
-        <p><strong>Emergency Contact Phone:</strong> <?php echo htmlspecialchars($Emergency_Contact_Phone ?: 'N/A'); ?></p>
-        <p><strong>Created At:</strong> <?php echo htmlspecialchars($Created_At ?: 'N/A'); ?></p>
-        <p><strong>Gender:</strong> <?php echo htmlspecialchars($Gender ?: 'N/A'); ?></p>
-
-        <a href="dentist_patient_records.php">Back to Patient Records</a>
-<div>
-
-    
-        <!-- Buttons to Open Modals -->
-        <button id="viewMedicalHistoryBtn">View Medical History</button>
-        <button id="viewDentalHistoryBtn">View Dental History</button>
-        <button id="viewCompletedAppointmentsBtn">View Completed Appointments</button>
-    </div>
-
-    
-    <!-- Medical History Modal -->
-    <div id="medicalHistoryModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Medical History</h2>
-            <?php if (empty($medical_history)): ?>
-                <p class="no-record">No medical history found for this patient.</p>
+        <h2 class="section-header"><i class="fas fa-notes-medical"></i> Treatment Records</h2>
+        <div class="table-container">
+            <?php if (empty($treatment_records)): ?>
+                <div class="no-record">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>No treatment records found for this patient.</p>
+                </div>
             <?php else: ?>
                 <table>
                     <thead>
                         <tr>
-                            <th>Current Medical Conditions</th>
-                            <th>Allergies</th>
-                            <th>Medications</th>
-                            <th>Previous Surgeries</th>
-                            <th>Created At</th>
+                            <th>Treatment ID</th>
+                            <th>Appointment ID</th>
+                            <th>Diagnosis</th>
+                            <th>Treatment</th>
+                            <th>Medication</th>
+                            <th>Follow Up</th>
+                            <th>Created</th>
+                            <th>Updated</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($medical_history as $history): ?>
+                        <?php foreach ($treatment_records as $record): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($history['current_medical_conditions'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['allergies'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['medications'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['previous_surgeries'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['created_at'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['treatment_id'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['appointment_id'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['diagnosis'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['treatment_performed'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['medication_prescribed'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['follow_up_date'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['created_at'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($record['updated_at'] ?: 'N/A'); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Medical History Modal -->
+    <div id="medicalHistoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <i class="fas fa-heartbeat"></i>
+                <h2>Medical History</h2>
+            </div>
+            <?php if (empty($medical_history)): ?>
+                <div class="no-record">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>No medical history found for this patient.</p>
+                </div>
+            <?php else: ?>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Medical Conditions</th>
+                                <th>Allergies</th>
+                                <th>Medications</th>
+                                <th>Previous Surgeries</th>
+                                <th>Recorded</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($medical_history as $history): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($history['current_medical_conditions'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['allergies'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['medications'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['previous_surgeries'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['created_at'] ?: 'N/A'); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -457,152 +604,129 @@ body {
     <div id="dentalHistoryModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Dental History</h2>
+            <div class="modal-header">
+                <i class="fas fa-tooth"></i>
+                <h2>Dental History</h2>
+            </div>
             <?php if (empty($dental_history)): ?>
-                <p class="no-record">No dental history found for this patient.</p>
+                <div class="no-record">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>No dental history found for this patient.</p>
+                </div>
             <?php else: ?>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Previous Procedures</th>
-                            <th>Last Dental Visit</th>
-                            <th>Reason for Visit</th>
-                            <th>Complications</th>
-                            <th>Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($dental_history as $history): ?>
+                <div class="table-container">
+                    <table>
+                        <thead>
                             <tr>
-                                <td><?php echo htmlspecialchars($history['previous_procedures'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['last_dental_visit'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['reason_for_visit'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['complications'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($history['created_at'] ?: 'N/A'); ?></td>
+                                <th>Previous Procedures</th>
+                                <th>Last Dental Visit</th>
+                                <th>Reason for Visit</th>
+                                <th>Complications</th>
+                                <th>Recorded</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($dental_history as $history): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($history['previous_procedures'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['last_dental_visit'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['reason_for_visit'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['complications'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($history['created_at'] ?: 'N/A'); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
     </div>
-<div>
-    
+
     <!-- Completed Appointments Modal -->
     <div id="completedAppointmentsModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Completed Appointments</h2>
+            <div class="modal-header">
+                <i class="fas fa-calendar-check"></i>
+                <h2>Completed Appointments</h2>
+            </div>
             <?php if (empty($completed_appointments)): ?>
-                <p class="no-record">No completed appointments found for this patient.</p>
+                <div class="no-record">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>No completed appointments found for this patient.</p>
+                </div>
             <?php else: ?>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Appointment Date</th>
-                            <th>Appointment Time</th>
-                            <th>Reason</th>
-                            <th>Emergency</th>
-                            <th>Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($completed_appointments as $appointment): ?>
+                <div class="table-container">
+                    <table>
+                        <thead>
                             <tr>
-                                <td><?php echo htmlspecialchars($appointment['appointment_date'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($appointment['appointment_time'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($appointment['reason'] ?: 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($appointment['is_emergency'] ? 'Yes' : 'No'); ?></td>
-                                <td><?php echo htmlspecialchars($appointment['appointment_created_at'] ?: 'N/A'); ?></td>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Reason</th>
+                                <th>Emergency</th>
+                                <th>Scheduled</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($completed_appointments as $appointment): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($appointment['appointment_date'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($appointment['appointment_time'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($appointment['reason'] ?: 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($appointment['is_emergency'] ? 'Yes' : 'No'); ?></td>
+                                    <td><?php echo htmlspecialchars($appointment['appointment_created_at'] ?: 'N/A'); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
-        
     </div>
 
     <script>
-        // Get the modals
-        var medicalModal = document.getElementById("medicalHistoryModal");
-        var dentalModal = document.getElementById("dentalHistoryModal");
-        var appointmentsModal = document.getElementById("completedAppointmentsModal");
-
-        // Get the buttons that open the modals
-        var medicalBtn = document.getElementById("viewMedicalHistoryBtn");
-        var dentalBtn = document.getElementById("viewDentalHistoryBtn");
-        var appointmentsBtn = document.getElementById("viewCompletedAppointmentsBtn");
-
-        // Get the <span> elements that close the modals
-        var closeBtns = document.getElementsByClassName("close");
-
-        // Open modals
-        medicalBtn.onclick = function() {
-            medicalModal.style.display = "block";
-        }
-        dentalBtn.onclick = function() {
-            dentalModal.style.display = "block";
-        }
-        appointmentsBtn.onclick = function() {
-            appointmentsModal.style.display = "block";
-        }
-
-        // Close modals
-        for (var i = 0; i < closeBtns.length; i++) {
-            closeBtns[i].onclick = function() {
-                medicalModal.style.display = "none";
-                dentalModal.style.display = "none";
-                appointmentsModal.style.display = "none";
-            }
-        }
-
-        // Close modals if clicked outside
-        window.onclick = function(event) {
-            if (event.target == medicalModal || event.target == dentalModal || event.target == appointmentsModal) {
-                medicalModal.style.display = "none";
-                dentalModal.style.display = "none";
-                appointmentsModal.style.display = "none";
-            }
-        }
+        // Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get modals and buttons
+            const modals = {
+                medical: document.getElementById("medicalHistoryModal"),
+                dental: document.getElementById("dentalHistoryModal"),
+                appointments: document.getElementById("completedAppointmentsModal")
+            };
+            
+            const buttons = {
+                medical: document.getElementById("viewMedicalHistoryBtn"),
+                dental: document.getElementById("viewDentalHistoryBtn"),
+                appointments: document.getElementById("viewCompletedAppointmentsBtn")
+            };
+            
+            const closeBtns = document.querySelectorAll(".close");
+            
+            // Open modals
+            Object.keys(buttons).forEach(key => {
+                buttons[key].addEventListener('click', () => {
+                    modals[key].style.display = "block";
+                });
+            });
+            
+            // Close modals
+            closeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    Object.values(modals).forEach(modal => {
+                        modal.style.display = "none";
+                    });
+                });
+            });
+            
+            // Close when clicking outside
+            window.addEventListener('click', (event) => {
+                Object.values(modals).forEach(modal => {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                });
+            });
+        });
     </script>
-   
-<!-- Treatment Records Table -->
-<div class="treatment_records">
-    <h2>Treatment Records</h2>
-    <?php if (empty($treatment_records)): ?>
-        <p class="no-record">No treatment records found for this patient.</p>
-    <?php else: ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>Treatment ID</th>
-                    <th>Appointment ID</th>
-                    <th>Diagnosis</th>
-                    <th>Treatment Performed</th>
-                    <th>Medication Prescribed</th>
-                    <th>Follow Up Date</th>
-                    <th>Created At</th>
-                    <th>Updated At</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($treatment_records as $record): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($record['treatment_id'] ?: 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($record['appointment_id'] ?: 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($record['diagnosis'] ?: 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($record['treatment_performed'] ?: 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($record['medication_prescribed'] ?: 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($record['follow_up_date'] ?: 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($record['created_at'] ?: 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($record['updated_at'] ?: 'N/A'); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
-</div>
-
 </body>
 </html>

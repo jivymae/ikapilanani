@@ -25,104 +25,193 @@ $conn->close();
     <meta charset="UTF-8">
     <title>Dentist Profile</title>
     <link rel="stylesheet" type="text/css" href="css/dentist.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* Main Content */
+        .main-content {
+           
+            padding: 40px;
+            width: calc(100% - 250px);
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
 
+        /* Profile Header */
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
 
-/* Main Content */
-.main-content {
-    flex: 1;
-    padding: 20px;
-    /* Offset for fixed sidebar */
-}
+        .profile-header h1 {
+            color: #6a5acd; /* Purple color */
+            font-size: 28px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
 
-.main-content h1 {
-    color: #8878c3; /* Dark Green */
-    font-size: 24px;
-    margin-bottom: 20px;
-}
+        .profile-header h1 i {
+            margin-right: 15px;
+            color: #8878c3;
+        }
 
-/* Profile Information Section */
-.profile-info {
-    background-color: #ffffff; /* White Background */
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Light Shadow */
-    margin-top: 20px;
-    border-radius: 8px; /* Rounded corners */
-}
+        /* Profile Card */
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
-.profile-info a {
-    display: inline-block;
-    padding: 12px 20px;
-    background-color: #8878c3; /* Sand Color */
-    color: #ffffff;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-    margin-bottom: 20px;
-}
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 100%;
+            background: linear-gradient(to bottom, #8878c3, #6a5acd);
+        }
 
-.profile-info a:hover {
-    background-color: #1565c0; /* Muted Teal */
-}
+        /* Profile Info */
+        .profile-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
 
-.profile-info p {
-    font-size: 18px;
-    color: #333333; /* Dark Gray */
-    margin-bottom: 10px;
-}
+        .info-item {
+            background: #f9f5ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #8878c3;
+            transition: transform 0.3s ease;
+        }
 
-.profile-info strong {
-    color: #354649; /* Dark Green */
-}
+        .info-item:hover {
+            transform: translateY(-3px);
+        }
 
-/* Responsive Design */
-@media screen and (max-width: 768px) {
-    body {
-        flex-direction: column;
-    }
+        .info-item strong {
+            color: #6a5acd;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
 
-    .sidebar {
-        width: 100%;
-        height: auto;
-        position: static;
-    }
+        .info-item p {
+            color: #555;
+            margin: 0;
+            font-size: 18px;
+        }
 
-    .main-content {
-        margin-left: 0;
-    }
-}
+        /* Update Button */
+        .update-btn {
+            background: linear-gradient(135deg, #8878c3, #6a5acd);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            margin-top: 20px;
+        }
 
+        .update-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, #7a68b3, #5a4abd);
+        }
+
+        .update-btn i {
+            margin-right: 10px;
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 30px 20px;
+            }
+            
+            .profile-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media screen and (max-width: 576px) {
+            .profile-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .profile-card {
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
-<div class="sidebar">
+    <div class="sidebar">
         <nav class="navbar">
-        <div class="logo">
-            <img src="images/lads.png" alt="Dental Clinic Logo">
-            <h1>LAD DCAMS</h1>
-        </div>
-        
-        <nav>
-        
-        <a href="dentist_dashboard.php">Dashboard</a>
-        <a href="dentist_profile.php" class="active">Profile</a>
-        <a href="dentist_patient_appointments.php">Appointments</a>
-        <a href="dentist_patient_records.php">Patient Records</a>
-       
-        <a href="logout.php">Logout</a>
+            <div class="logo">
+                <img src="images/lads.png" alt="Dental Clinic Logo">
+                <h1>LAD DCAMS</h1>
+            </div>
+            
+            <nav>
+                <a href="dentist_dashboard.php">Dashboard</a>
+                <a href="dentist_profile.php" class="active">Profile</a>
+                <a href="dentist_patient_appointments.php">Appointments</a>
+                <a href="dentist_patient_records.php">Patient Records</a>
+                <a href="logout.php">Logout</a>
+            </nav>
+        </nav>
     </div>
     
     <div class="main-content">
-        <h1>Dentist Profile</h1>
-        <div class="profile-info">
-        <a href="update_dentist_profile.php">Update Profile</a>
-            <p><strong>Username:</strong> <?php echo htmlspecialchars($username ?? ''); ?></p>
-            <p><strong>Email:</strong> <?php echo htmlspecialchars($email ?? ''); ?></p>
-            <p><strong>Phone:</strong> <?php echo htmlspecialchars($phone ?? ''); ?></p>
-            <p><strong>Address:</strong> <?php echo htmlspecialchars($address ?? ''); ?></p>
+        <div class="profile-header">
+            <h1><i class="fas fa-user-md"></i> Dentist Profile</h1>
+        </div>
+        
+        <div class="profile-card">
+            <div class="profile-info">
+                <div class="info-item">
+                    <strong>Username</strong>
+                    <p><?php echo htmlspecialchars($username ?? 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Email</strong>
+                    <p><?php echo htmlspecialchars($email ?? 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Phone</strong>
+                    <p><?php echo htmlspecialchars($phone ?? 'N/A'); ?></p>
+                </div>
+                <div class="info-item">
+                    <strong>Address</strong>
+                    <p><?php echo htmlspecialchars($address ?? 'N/A'); ?></p>
+                </div>
+            </div>
+            
+            <a href="update_dentist_profile.php" class="update-btn">
+                <i class="fas fa-user-edit"></i> Update Profile
+            </a>
         </div>
     </div>
-    
 </body>
 </html>
