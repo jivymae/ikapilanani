@@ -1,28 +1,28 @@
 <?php
-include 'login_check.php'; // Ensure user is logged in
+include 'login_check.php';
 include 'db_config.php';
-include 'admin_check.php'; // Include the admin check helper
+include 'admin_check.php';
 
-// Include mPDF library
-require_once __DIR__ . '/vendor/autoload.php';  // Adjust the path if needed
+require_once __DIR__ . '/vendor/autoload.php';
 
-// Check if the page is allowed
 $page = basename($_SERVER['PHP_SELF']);
 if (!isAdminPage($page)) {
-    header('Location: unauthorized.php'); // Redirect to an error or dashboard page
+    header('Location: unauthorized.php');
     exit();
 }
 
-// Automatically set default date range (e.g., current month)
+// Set default date range
 if (empty($_POST['start_date']) || empty($_POST['end_date'])) {
-    $startDate = date('Y-m-01'); // First day of the current month
-    $endDate = date('Y-m-t');   // Last day of the current month
+    $startDate = date('Y-m-01');
+    $endDate = date('Y-m-t');
+    $isDefaultDate = true;
 } else {
     $startDate = $_POST['start_date'];
     $endDate = $_POST['end_date'];
+    $isDefaultDate = false;
 }
 
-// Build the SQL query for fetching filtered data
+// Dentist appointments query
 $sql = "SELECT 
     u.user_id AS dentist_id,
     CONCAT(u.first_name, ' ', u.last_name) AS dentist_name,
@@ -33,33 +33,154 @@ $sql = "SELECT
     SUM(CASE WHEN a.appointment_status = 'no_show' THEN 1 ELSE 0 END) AS no_show_appointments
 FROM users u
 LEFT JOIN appointments a ON u.user_id = a.dentist_id
-WHERE u.role = 'dentist'
-";
+WHERE u.role = 'dentist'";
 
-// Add date filter only if both start_date and end_date are provided
 if (!empty($startDate) && !empty($endDate)) {
     $sql .= " AND a.appointment_date BETWEEN '$startDate' AND '$endDate'";
 }
 
 $sql .= " GROUP BY u.user_id ORDER BY u.first_name, u.last_name";
 
-// Execute the query
 $result = $conn->query($sql);
-
-// Fetch all results
 $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 
+// Financial data - only query if dates are not default
+if (!$isDefaultDate) {
+    $financialSql = "SELECT 
+        SUM(t.transaction_amount) AS total_revenue,
+        COUNT(DISTINCT p.payment_id) AS total_transaction,
+        COUNT(DISTINCT a.appointment_id) AS total_appointments
+    FROM payments p
+    JOIN transaction t ON p.payment_id = t.payment_id
+    JOIN appointments a ON p.appointment_id = a.appointment_id
+    WHERE p.payment_status = 'paid'
+    AND a.appointment_date BETWEEN '$startDate' AND '$endDate'";
 
+    $financialResult = $conn->query($financialSql);
+    $financialData = $financialResult ? $financialResult->fetch_assoc() : [
+        'total_revenue' => 0, 
+        'total_transaction' => 0,
+        'total_appointments' => 0
+    ];
+} else {
+    $financialData = [
+        'total_revenue' => 0, 
+        'total_transaction' => 0,
+        'total_appointments' => 0
+    ];
+}
 
-// If the user clicked the "Download PDF" button
+// Services breakdown
+$servicesSql = "SELECT 
+    s.service_id,
+    s.service_name,
+    s.price AS service_price,
+    COUNT(asr.service_id) AS service_count,
+    SUM(s.price) AS service_total
+FROM services s
+JOIN appointment_services asr ON s.service_id = asr.service_id
+JOIN appointments a ON asr.appointment_id = a.appointment_id
+JOIN payments p ON a.appointment_id = p.appointment_id
+WHERE p.payment_status = 'paid'";
+
+if (!$isDefaultDate) {
+    $servicesSql .= " AND a.appointment_date BETWEEN '$startDate' AND '$endDate'";
+}
+
+$servicesSql .= " GROUP BY s.service_id ORDER BY service_count DESC";
+
+$servicesResult = $conn->query($servicesSql);
+$servicesData = $servicesResult ? $servicesResult->fetch_all(MYSQLI_ASSOC) : [];
+
+// Top performing services
+$topServicesSql = "SELECT 
+    s.service_id,
+    s.service_name,
+    COUNT(asr.service_id) AS service_count
+FROM services s
+JOIN appointment_services asr ON s.service_id = asr.service_id
+JOIN appointments a ON asr.appointment_id = a.appointment_id
+JOIN payments p ON a.appointment_id = p.appointment_id
+WHERE p.payment_status = 'paid'";
+
+if (!$isDefaultDate) {
+    $topServicesSql .= " AND a.appointment_date BETWEEN '$startDate' AND '$endDate'";
+}
+
+$topServicesSql .= " GROUP BY s.service_id ORDER BY service_count DESC LIMIT 5";
+
+$topServicesResult = $conn->query($topServicesSql);
+$topServicesData = $topServicesResult ? $topServicesResult->fetch_all(MYSQLI_ASSOC) : [];
+
+// PDF Generation
 if (isset($_POST['download_pdf'])) {
-    // Create the HTML content for the PDF
     ob_start();
     ?>
-
     <h1>Dental Appointment Report</h1>
     <p><strong>Date Range:</strong> <?php echo htmlspecialchars($startDate) . " to " . htmlspecialchars($endDate); ?></p>
+    
+    <h2>Financial Summary</h2>
+    <p><strong>Total Revenue:</strong> ₱<?php echo number_format((float)$financialData['total_revenue'], 2); ?></p>
+    <p><strong>Total Transactions:</strong> <?php echo $financialData['total_transaction']; ?></p>
+    <p><strong>Total Appointments:</strong> <?php echo $financialData['total_appointments']; ?></p>
+    
+    <h3>Services Breakdown</h3>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Service ID</th>
+                <th>Service Name</th>
+                <th>Price</th>
+                <th>Count</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($servicesData): ?>
+                <?php foreach ($servicesData as $service): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($service['service_id']); ?></td>
+                        <td><?php echo htmlspecialchars($service['service_name']); ?></td>
+                        <td>₱<?php echo number_format((float)$service['service_price'], 2); ?></td>
+                        <td><?php echo htmlspecialchars($service['service_count']); ?></td>
+                        <td>₱<?php echo number_format((float)$service['service_total'], 2); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="5">No services rendered in this period.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 
+    <h3>Top 5 Services</h3>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Service ID</th>
+                <th>Service Name</th>
+                <th>Times Performed</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($topServicesData): ?>
+                <?php foreach ($topServicesData as $service): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($service['service_id']); ?></td>
+                        <td><?php echo htmlspecialchars($service['service_name']); ?></td>
+                        <td><?php echo htmlspecialchars($service['service_count']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="3">No services data available.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+    <h2>Dentist Appointments Summary</h2>
     <table border="1" cellpadding="5" cellspacing="0">
         <thead>
             <tr>
@@ -95,49 +216,127 @@ if (isset($_POST['download_pdf'])) {
 
     <?php
     $htmlContent = ob_get_clean();
-
-    // Initialize mPDF
     $mpdf = new \Mpdf\Mpdf();
-
-    // Write HTML content to the PDF
     $mpdf->WriteHTML($htmlContent);
-
-    // Generate a unique filename for the PDF
     $fileName = 'appointment_report_' . time() . '.pdf';
     $filePath = 'uploads/' . $fileName;
+    $mpdf->Output($filePath, 'F');
 
-    // Output the PDF to the uploads directory
-    $mpdf->Output($filePath, 'F'); // 'F' saves the PDF to a file
-
-    // Now insert the report details into the database
-    $reportType = 'Dental Appointment Report'; // Define the report type
-    $generatedAt = date('Y-m-d H:i:s'); // Current timestamp
-
-    // Insert the report data into the database
-    $insertSql = "INSERT INTO reports (report_type, file_path, start_date, end_date, generated_at)
-                  VALUES (?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($insertSql);
-    $stmt->bind_param("sssss", $reportType, $filePath, $startDate, $endDate, $generatedAt);
-
-    if ($stmt->execute()) {
-        // If the insert is successful, proceed with downloading the file
-        // Send the appropriate headers for the download
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
-        header('Content-Length: ' . filesize($filePath));
-
-        // Output the file content
-        readfile($filePath);
-
-        // Clean up and exit
-        exit();
-    } else {
-        echo "Error saving the report to the database: " . $stmt->error;
-    }
-
-    $stmt->close();
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+    header('Content-Length: ' . filesize($filePath));
+    readfile($filePath);
+    exit();
 }
-$conn->close();
+
+// Print Report
+if (isset($_POST['print_report'])) {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Dental Clinic Report</title>
+        <style>
+            body { font-family: Arial; margin: 20px; }
+            h1 { color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .summary { display: flex; margin-bottom: 20px; }
+            .summary-item { flex: 1; padding: 10px; background: #f8f9fa; margin-right: 10px; }
+            @media print {
+                .no-print { display: none; }
+                body { margin: 0; padding: 10px; }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Dental Clinic Report</h1>
+        <p><strong>Date Range:</strong> <?php echo htmlspecialchars($startDate) . " to " . htmlspecialchars($endDate); ?></p>
+        
+        <div class="summary">
+            <div class="summary-item">
+                <h3>Total Revenue</h3>
+                <p>₱<?php echo number_format((float)$financialData['total_revenue'], 2); ?></p>
+            </div>
+            <div class="summary-item">
+                <h3>Total Transactions</h3>
+                <p><?php echo $financialData['total_transaction']; ?></p>
+            </div>
+            <div class="summary-item">
+                <h3>Total Appointments</h3>
+                <p><?php echo $financialData['total_appointments']; ?></p>
+            </div>
+        </div>
+
+        <h2>Services Breakdown</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Service ID</th>
+                    <th>Service Name</th>
+                    <th>Price</th>
+                    <th>Count</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($servicesData): ?>
+                    <?php foreach ($servicesData as $service): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($service['service_id']); ?></td>
+                            <td><?php echo htmlspecialchars($service['service_name']); ?></td>
+                            <td>₱<?php echo number_format((float)$service['service_price'], 2); ?></td>
+                            <td><?php echo htmlspecialchars($service['service_count']); ?></td>
+                            <td>₱<?php echo number_format((float)$service['service_total'], 2); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5">No services rendered in this period.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <h2>Dentist Appointments</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Dentist Name</th>
+                    <th>Pending</th>
+                    <th>Completed</th>
+                    <th>Cancelled</th>
+                    <th>No-shows</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($rows): ?>
+                    <?php foreach ($rows as $row): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row['dentist_name']); ?></td>
+                            <td><?php echo htmlspecialchars($row['pending_appointments']); ?></td>
+                            <td><?php echo htmlspecialchars($row['completed_appointments']); ?></td>
+                            <td><?php echo htmlspecialchars($row['cancelled_appointments']); ?></td>
+                            <td><?php echo htmlspecialchars($row['no_show_appointments']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5">No appointments in this period.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <script>window.print();</script>
+    </body>
+    </html>
+    <?php
+    echo ob_get_clean();
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -145,86 +344,107 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports - Dental Clinic Management System</title>
+    <title>Reports - Dental Clinic</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
-</head>
-<style>
-
+  <style>
 /* Container */
-.container {
-    display: flex;
-    min-height: 100vh;
-    background-color: #fff;
-}
-
-
-/* Main Content */
-.main-content {
-    flex-grow: 1;
-    padding: 20px;
-}
-
-#reports {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    font-size: 28px;
+/* Base Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
     color: #333;
+}
+
+
+.main-content {
+    padding: 30px;
+    background-color: #ffffff;
+    max-width: 1200px;
+    margin: 350 auto;
+}
+
+/* Headings */
+h1, h2, h3 {
+    color: #004080;
     margin-bottom: 20px;
 }
 
 /* Form Styling */
 form {
-    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+form div {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-width: 200px;
 }
 
-form label {
-    font-size: 16px;
+label {
     margin-bottom: 5px;
-    color: #555;
+    font-weight: bold;
 }
 
-form input[type="date"] {
-    padding: 10px;
-    margin-bottom: 10px;
+input[type="date"] {
+    padding: 8px;
     border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
+    border-radius: 4px;
 }
 
-form button {
-    padding: 10px;
-    background-color: #272aff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-form button:hover {
-    background-color: rgb(89,237,255);
-}
-
-/* Print Button */
 button {
-    background-color: #007bff;
+    background-color: #0077cc;
     color: white;
-    border: none;
     padding: 10px 20px;
-    border-radius: 5px;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
-    margin-bottom: 20px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-top: 25px;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #005fa3;
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background-color: #eaf4ff;
+    border-left: 5px solid #0077cc;
+    padding: 20px;
+    border-radius: 8px;
+    flex: 1;
+    min-width: 250px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.summary-card h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #004080;
+}
+
+.summary-card p {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2b4d70;
 }
 
 /* Table Styling */
@@ -232,63 +452,76 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    background-color: #fff;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
-table th, table td {
-    padding: 12px;
-    text-align: center;
-    border: 1px solid #ddd;
+table thead {
+    background-color:#272aff;
+    color: white;
 }
 
-table th {
-    background-color: #f1f1f1;
-    color: #333;
-    font-size: 18px;
-    font-weight: bold;
-}
-
+table th,
 table td {
-    color: #666;
-    font-size: 16px;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
 }
 
-/* Table Row Hover Effect */
-table tr:hover {
-    background-color: #f9f9f9;
+table tbody tr:hover {
+    background-color: #f1f9ff;
 }
 
-/* No Reports Available */
-table td[colspan="7"] {
-    text-align: center;
-    font-size: 18px;
-    color: #999;
-    padding: 20px;
+/* Utilities */
+a {
+    color: #0077cc;
+    text-decoration: none;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
-        flex-direction: column;
+a:hover {
+    text-decoration: underline;
+}
+
+/* Hide elements when printing */
+@media print {
+    .no-print {
+        display: none;
     }
 
-    .sidebar {
-        width: 100%;
-        height: auto;
-        padding: 10px;
+    body {
+        background-color: white;
+        color: black;
     }
 
     .main-content {
-        padding: 10px;
+        padding: 0;
+        box-shadow: none;
     }
 
-    table th, table td {
-        font-size: 14px;
+    table, .summary-cards, form {
+        page-break-inside: avoid;
     }
 }
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .summary-cards {
+        flex-direction: column;
+    }
+
+    form {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+}
+
+
 </style>
 <body>
-    <div class="container">
+       <div class="container">
         <!-- Sidebar Menu -->
         <aside class="sidebar">
             <h2 class="logo">
@@ -307,60 +540,101 @@ table td[colspan="7"] {
             </ul>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <section id="reports">
-                <h1>Reports</h1>
-
-                <!-- Date Filter Form -->
-                <form method="POST">
+            <h1>Reports</h1>
+            
+            <form method="POST">
+                <div>
                     <label for="start_date">Start Date:</label>
                     <input type="date" name="start_date" id="start_date" value="<?php echo htmlspecialchars($startDate); ?>" required>
+                </div>
+                <div>
                     <label for="end_date">End Date:</label>
                     <input type="date" name="end_date" id="end_date" value="<?php echo htmlspecialchars($endDate); ?>" required>
-                    <button type="submit">Filter</button>
-                </form>
+                </div>
+                <button type="submit">Filter</button>
+                <button type="submit" name="download_pdf">Download PDF</button>
+                <button type="submit" name="print_report" class="no-print">Print Report</button>
+            </form>
 
-                <!-- Download PDF Button -->
-                <form method="POST">
-                    <button type="submit" name="download_pdf" class="download-pdf-btn">Download PDF</button>
-                </form>
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <h3>Total Revenue</h3>
+                    <p>₱<?php echo number_format((float)$financialData['total_revenue'], 2); ?></p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Transactions</h3>
+                    <p><?php echo $financialData['total_transaction']; ?></p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Appointments</h3>
+                    <p><?php echo $financialData['total_appointments']; ?></p>
+                </div>
+            </div>
 
-                <!-- Dentist Report Table -->
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Dentist ID</th>
-                            <th>Dentist Name</th>
-                            <th>Dentist Email</th>
-                            <th>Pending</th>
-                            <th>Completed</th>
-                            <th>Cancelled</th>
-                            <th>No-shows</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($rows): ?>
-                            <?php foreach ($rows as $row): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($row['dentist_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['dentist_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['dentist_email']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['pending_appointments']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['completed_appointments']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['cancelled_appointments']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['no_show_appointments']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+            <h2>Services Breakdown</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service ID</th>
+                        <th>Service Name</th>
+                        <th>Price</th>
+                        <th>Count</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($servicesData): ?>
+                        <?php foreach ($servicesData as $service): ?>
                             <tr>
-                                <td colspan="7">No reports available for the selected period.</td>
+                                <td><?php echo htmlspecialchars($service['service_id']); ?></td>
+                                <td><?php echo htmlspecialchars($service['service_name']); ?></td>
+                                <td>₱<?php echo number_format((float)$service['service_price'], 2); ?></td>
+                                <td><?php echo htmlspecialchars($service['service_count']); ?></td>
+                                <td>₱<?php echo number_format((float)$service['service_total'], 2); ?></td>
                             </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </section>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5">No services data available.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
+            <h2>Dentist Appointments</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dentist Name</th>
+                        <th>Pending</th>
+                        <th>Completed</th>
+                        <th>Cancelled</th>
+                        <th>No-shows</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($rows): ?>
+                        <?php foreach ($rows as $row): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['dentist_name']); ?></td>
+                                <td><?php echo htmlspecialchars($row['pending_appointments']); ?></td>
+                                <td><?php echo htmlspecialchars($row['completed_appointments']); ?></td>
+                                <td><?php echo htmlspecialchars($row['cancelled_appointments']); ?></td>
+                                <td><?php echo htmlspecialchars($row['no_show_appointments']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5">No appointments data available.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </main>
     </div>
 </body>
 </html>
+<?php
+$conn->close();
+?>

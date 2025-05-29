@@ -80,213 +80,160 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patients - Dental Clinic Management System</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
+    
 </head>
 
 <style>
-/* Your existing CSS styles here */
 
-/* styles.css */
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    color: #333;
 }
 
-.container {
-    display: flex;
-    min-height: 100vh;
-}
 
-.sidebar {
-    width: 250px;
-    background: linear-gradient(216deg, rgba(89,237,255,1) 0%, rgba(45,116,255,1) 100%);
-    color: #ecf0f1;
-    padding: 15px;
-    position: fixed;
-    height: 100%;
-    overflow-y: auto;
-    z-index: 1000;
-}
 
-.sidebar h2.logo {
-    display: flex;
-    align-items: center;
+/* Main Content */
+
+
+.main-content h1,
+.main-content h2 {
+    color: #004080;
     margin-bottom: 20px;
 }
 
-.sidebar h2.logo img {
-    max-width: 80px; /* Adjust size as needed */
-    height: auto;
-    margin-right: 10px;
-}
-
-.sidebar h1 {
-    font-size: 24px;
-    margin: 0;
-    color: #ecf0f1;
-    font-weight: bold;
-}
-
-.sidebar ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.sidebar ul li {
-    margin: 5px 0;
-}
-
-.sidebar ul li a {
-    color: #ecf0f1;
-    text-decoration: none;
-    font-size: 18px;
-    display: block; /* Ensure full width clickable area */
-    padding: 10px;
-    border-radius: 5px; /* Add rounded corners */
-}
-
-.sidebar ul li a:hover,
-.sidebar ul li a.active {
-    background-color: #272aff; /* Darker shade for active or hover state */
-    color: #ecf0f1;
-    text-decoration: none;
-}
-
-.sidebar ul li:last-child {
-    margin-top: auto; /* Pushes Logout to the bottom */
-}
-
-.main-content {
-    margin-left: 280px; /* Width of the sidebar */
-    padding: 20px;
-    width: calc(100% - 250px); /* Remaining width after sidebar */
-    background-color: #f9f9f9;
-}
-
-h1 {
-    font-size: 24px;
-    color: #2c3e50;
-}
-
-
-table a {
-    display: inline-block; /* Makes the link look like a button */
-    padding: 5px 10px; /* Adds some inner spacing */
-    background-color: #3498db; /* Blue background */
-    color: white; /* White text color */
-    text-decoration: none; /* Removes underline */
-    font-size: 14px; /* Adjusts text size */
-    font-weight: bold; /* Makes the text bold */
-    border-radius: 3px; /* Slightly rounded corners */
-    transition: background-color 0.3s ease, transform 0.2s ease; /* Adds hover and click effects */
-    text-align: center; /* Centers text within the button */
-    cursor: pointer; /* Changes the cursor to pointer */
-    border: none; /* Removes border */
-}
-
-table a:hover {
-    background-color: #2874a6; /* Darker blue on hover */
-    transform: scale(1.05); /* Slightly enlarges button on hover */
-}
-
-table a:active {
-    transform: scale(0.95); /* Shrinks button slightly on click */
-}
-
-table td {
-    text-align: center; /* Centers the button within the table cell */
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-table, th, td {
-    border: 1px solid #ddd;
-}
-
-th, td {
-    padding: 10px;
-    text-align: left;
-}
-
-th {
-    background: #f2f2f2;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-input, textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
+/* Button */
 button {
-    padding: 10px 15px;
-    background: #007bff;
+    background-color: #0077cc;
+    color: white;
+    padding: 10px 20px;
     border: none;
-    color: #fff;
-    font-size: 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background: #0056b3;
+    background-color: #005fa3;
 }
 
+a button {
+    text-decoration: none;
+}
+
+/* Messages */
 .error {
-    color: red;
-    margin-bottom: 10px;
+    background-color: #ffe0e0;
+    color: #a94442;
+    padding: 10px;
+    margin: 15px 0;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
 }
 
 .success {
-    color: green;
-    margin-bottom: 10px;
-}
-/* Additional CSS for form and table */
-form {
-    margin-bottom: 20px;
-}
-
-input[type="text"], input[type="date"] {
-    width: calc(100% - 22px); /* Adjusting width for padding */
+    background-color: #e0ffe0;
+    color: #2e7d32;
     padding: 10px;
+    margin: 15px 0;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
 }
 
-button[type="submit"] {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
+/* Form Styling */
+form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
 }
 
-button[type="submit"]:hover {
-    background-color: #0056b3;
+.form-group {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
 }
 
-table th, table td {
+label {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+input[type="text"],
+input[type="date"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table thead {
+    background-color: #004080;
+    color: white;
+}
+
+table th,
+table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
     text-align: left;
 }
 
-.table {
-    margin-top: 20px;
-    border-collapse: collapse;
+table tbody tr:hover {
+    background-color: #eef7ff;
 }
+
+a {
+    color: #0077cc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive (optional) */
+@media screen and (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .sidebar ul {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .sidebar ul li {
+        margin: 0;
+    }
+
+    .main-content {
+        padding: 20px;
+    }
+}
+
 
 </style>
 <body>

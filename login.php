@@ -52,176 +52,157 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
-    <style>
-        /* General reset and box-sizing */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #e8f4f8;  /* Light dental blue */
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: #2a6273;  /* Dark dental blue */
+        background-image: 
+            radial-gradient(circle at 90% 80%, rgba(173, 216, 230, 0.3) 0%, transparent 25%),
+            radial-gradient(circle at 10% 20%, rgba(173, 216, 230, 0.3) 0%, transparent 25%);
+    }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f7fc;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+    .container {
+        background-color: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(42, 98, 115, 0.1);
+        width: 100%;
+        max-width: 400px;
+        position: relative;
+        overflow: hidden;
+    }
 
-        .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
+    .container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 60px;
+        height: 60px;
+        background-color: #f0f9fc;
+        border-radius: 0 0 0 100%;
+        z-index: 0;
+    }
 
-        h1 {
-            text-align: center;
-            color: #27C5F5;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
+    h1 {
+        text-align: center;
+        margin-bottom: 1.8rem;
+        color: #1a4a5a;
+        position: relative;
+        font-weight: 600;
+    }
 
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    h1::after {
+        content: "";
+        display: block;
+        width: 50px;
+        height: 3px;
+        background: #4ecdc4;  /* Dental teal */
+        margin: 0.5rem auto 0;
+    }
 
-        label {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 5px;
-        }
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
 
-        input {
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            background-color: #f9f9f9;
-            transition: all 0.3s ease;
-        }
+    label {
+        font-weight: 600;
+        margin-bottom: -1rem;
+        color: #2a6273;
+        font-size: 0.95rem;
+    }
 
-        input:focus {
-            outline: none;
-            border-color: #27C5F5;
-            background-color: #e9f7e8;
-        }
+    input {
+        padding: 0.9rem;
+        border: 1px solid #c5e3ed;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background-color: #f9fdfe;
+    }
 
-        button {
-            padding: 12px;
-            background-color: #27C5F5;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    input:focus {
+        border-color: #4ecdc4;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+        background-color: white;
+    }
 
-        button:hover {
-            background-color: #0D9BC6;
-        }
+    button {
+        background-color: #4ecdc4;  /* Dental teal */
+        color: white;
+        padding: 0.9rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 0.5rem;
+        letter-spacing: 0.5px;
+    }
 
-        .register-link, .forgot-password-link {
-            margin-top: 10px;
-            display: block;
-            text-align: center;
-            font-size: 14px;
-            color: #0D9BC6;
-            text-decoration: none;
-        }
+    button:hover {
+        background-color: #3ab7ad;
+        transform: translateY(-2px);
+    }
 
-        .register-link:hover, .forgot-password-link:hover {
-            text-decoration: underline;
-        }
+    .error {
+        color: #e74c3c;
+        text-align: center;
+        margin: 1rem 0;
+        padding: 0.8rem;
+        background-color: #fadbd8;
+        border-radius: 6px;
+        border-left: 4px solid #e74c3c;
+    }
 
-        /* Error message styling */
-        .error {
-            color: red;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 10px;
-        }
+    a {
+        display: block;
+        text-align: center;
+        color: #2a6273;
+        text-decoration: none;
+        margin-top: 1rem;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+    }
 
-        /* Responsive styling */
-        @media (max-width: 1024px) {  /* Tablets and smaller laptops */
-            .container {
-                padding: 30px;
-                max-width: 90%;
-            }
+    a:hover {
+        color: #4ecdc4;
+        text-decoration: underline;
+    }
 
-            h1 {
-                font-size: 22px;
-            }
+    .forgot-password-link {
+        margin-top: 1.8rem;
+    }
 
-            input, button {
-                font-size: 14px;
-                padding: 10px;
-            }
+    .register-link {
+        margin-top: 0.8rem;
+        font-weight: 600;
+        color: #4ecdc4;
+    }
 
-            label {
-                font-size: 13px;
-            }
-        }
-
-        @media (max-width: 768px) {  /* Small tablets and below */
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                padding: 20px;
-                max-width: 95%;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            input, button {
-                font-size: 14px;
-                padding: 10px;
-            }
-
-            label {
-                font-size: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {  /* Mobile phones */
-            .container {
-                padding: 15px;
-                max-width: 100%;
-            }
-
-            h1 {
-                font-size: 18px;
-            }
-
-            input, button {
-                font-size: 14px;
-                padding: 12px;
-            }
-
-            label {
-                font-size: 12px;
-            }
-
-            .register-link, .forgot-password-link {
-                font-size: 12px;
-            }
-        }
-
-    </style>
+    /* Tooth icon decoration */
+    .container::after {
+        content: "🦷";
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        font-size: 1.2rem;
+        opacity: 0.1;
+    }
+</style>
 </head>
 <body>
     <div class="container">
@@ -238,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php if (!empty($error)) { echo '<p class="error">' . htmlspecialchars($error) . '</p>'; } ?>
 
         <a href="request_reset.php" class="forgot-password-link">Forgot your password?</a>
-        <a href="register_patient.php" class="register-link">Not registered? Register now</a>
+        
     </div>
 </body>
 </html>
